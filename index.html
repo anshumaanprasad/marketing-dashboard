@@ -188,62 +188,178 @@
 
                 setIsAnalyzing(true);
                 
-                try {
-                    const campaignSummary = generateCampaignSummary(campaigns);
+                // Always use advanced basic analysis (no external API needed)
+                // This provides professional-grade insights without API dependencies
+                const basicInsights = generateBasicInsights(campaigns);
+                setAiInsights(basicInsights);
+                setIsAnalyzing(false);
+            };
+
+            const generateBasicInsights = (campaigns) => {
+                const platformGroups = campaigns.reduce((acc, camp) => {
+                    if (!acc[camp.platform]) acc[camp.platform] = [];
+                    acc[camp.platform].push(camp);
+                    return acc;
+                }, {});
+
+                // Calculate comprehensive metrics
+                const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
+                const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
+                const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+                const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+                
+                const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
+                const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+                const avgCPC = totalClicks > 0 ? totalSpend / totalClicks : 0;
+
+                // Find best and worst performers by multiple metrics
+                const campaignsWithMetrics = campaigns.filter(c => c.conversions > 0).map(c => ({
+                    ...c,
+                    cpa: c.spend / c.conversions,
+                    roi: c.conversions > 0 ? (c.conversions * 100 - c.spend) / c.spend : 0
+                }));
+
+                const campaignsByCPA = [...campaignsWithMetrics].sort((a, b) => a.cpa - b.cpa);
+                const campaignsByCTR = [...campaigns].filter(c => c.ctr > 0).sort((a, b) => b.ctr - a.ctr);
+                const campaignsBySpend = [...campaigns].sort((a, b) => b.spend - a.spend);
+                const campaignsByConversions = [...campaigns].sort((a, b) => b.conversions - a.conversions);
+
+                const bestCampaign = campaignsByCPA[0];
+                const worstCampaign = campaignsByCPA[campaignsByCPA.length - 1];
+                const highestCTR = campaignsByCTR[0];
+                const topSpender = campaignsBySpend[0];
+                const topConverter = campaignsByConversions[0];
+
+                // Platform comparison
+                const platformMetrics = Object.entries(platformGroups).map(([platform, camps]) => {
+                    const spend = camps.reduce((sum, c) => sum + c.spend, 0);
+                    const conversions = camps.reduce((sum, c) => sum + c.conversions, 0);
+                    const clicks = camps.reduce((sum, c) => sum + c.clicks, 0);
+                    const impressions = camps.reduce((sum, c) => sum + c.impressions, 0);
+                    return { 
+                        platform, 
+                        cpa: conversions > 0 ? spend / conversions : Infinity,
+                        ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+                        spend,
+                        conversions
+                    };
+                }).sort((a, b) => a.cpa - b.cpa);
+
+                // Generate comprehensive insights
+                let trends = `📊 Portfolio Overview: Analyzing ${campaigns.length} campaigns across ${Object.keys(platformGroups).length} platform(s). `;
+                trends += `Total investment of $${totalSpend.toFixed(2)} generated ${totalConversions} conversions at an average CPA of $${avgCPA.toFixed(2)}. `;
+                trends += `Average CTR is ${avgCTR.toFixed(2)}% with ${totalClicks.toLocaleString()} total clicks from ${totalImpressions.toLocaleString()} impressions. `;
+                
+                if (platformMetrics.length > 1) {
+                    const bestPlatform = platformMetrics[0];
+                    const worstPlatform = platformMetrics[platformMetrics.length - 1];
+                    trends += `${bestPlatform.platform.toUpperCase()} is outperforming ${worstPlatform.platform.toUpperCase()} with ${((worstPlatform.cpa / bestPlatform.cpa - 1) * 100).toFixed(0)}% lower CPA.`;
+                }
+
+                let working = '';
+                let notWorking = '';
+                let recommendations = [];
+
+                // What's working
+                if (bestCampaign) {
+                    working = `🎯 Top Performers: "${bestCampaign.name}" on ${bestCampaign.platform} leads with the lowest CPA of $${bestCampaign.cpa.toFixed(2)}. `;
                     
-                    const response = await fetch('https://api.anthropic.com/v1/messages', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            model: 'claude-sonnet-4-20250514',
-                            max_tokens: 1000,
-                            messages: [{
-                                role: 'user',
-                                content: `You are a performance marketing analyst. Analyze this campaign data and provide:
-
-1. Key trends and patterns
-2. What's working well (to double down on)
-3. What's not working (needs immediate improvement)
-4. 3-5 specific, actionable recommendations
-
-Campaign Data Summary:
-${campaignSummary}
-
-Provide a structured analysis in JSON format with keys: trends, working, notWorking, recommendations (array of objects with 'action' and 'reason' keys).`
-                            }]
-                        })
-                    });
-
-                    const data = await response.json();
-                    const analysisText = data.content[0].text;
+                    if (topConverter && topConverter.id !== bestCampaign.id) {
+                        working += `"${topConverter.name}" drives the most conversions (${topConverter.conversions}). `;
+                    }
                     
-                    // Try to extract JSON from the response
-                    let insights;
-                    try {
-                        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-                        insights = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-                            trends: analysisText,
-                            working: '',
-                            notWorking: '',
-                            recommendations: []
-                        };
-                    } catch {
-                        insights = {
-                            trends: analysisText,
-                            working: '',
-                            notWorking: '',
-                            recommendations: []
-                        };
+                    if (highestCTR && highestCTR.id !== bestCampaign.id) {
+                        working += `"${highestCTR.name}" has the highest engagement with ${highestCTR.ctr.toFixed(2)}% CTR.`;
                     }
 
-                    setAiInsights(insights);
-                } catch (error) {
-                    alert('Error analyzing with AI: ' + error.message);
-                } finally {
-                    setIsAnalyzing(false);
+                    recommendations.push({
+                        action: `🚀 Scale "${bestCampaign.name}" by 20-30%`,
+                        reason: `Lowest CPA ($${bestCampaign.cpa.toFixed(2)}) indicates strong product-market fit and efficient targeting. Room to scale before hitting diminishing returns.`
+                    });
+
+                    if (highestCTR && highestCTR.ctr > avgCTR * 1.5) {
+                        recommendations.push({
+                            action: `🎨 Repurpose creatives from "${highestCTR.name}"`,
+                            reason: `CTR of ${highestCTR.ctr.toFixed(2)}% is ${((highestCTR.ctr / avgCTR - 1) * 100).toFixed(0)}% above average. Creative resonates strongly with audience.`
+                        });
+                    }
                 }
+
+                // What's not working
+                if (worstCampaign && campaignsByCPA.length > 2) {
+                    const cpaRatio = worstCampaign.cpa / avgCPA;
+                    notWorking = `⚠️ Underperformers: "${worstCampaign.name}" has a CPA of $${worstCampaign.cpa.toFixed(2)}, which is ${((cpaRatio - 1) * 100).toFixed(0)}% above your average. `;
+                    
+                    const lowCTRCampaigns = campaigns.filter(c => c.ctr > 0 && c.ctr < avgCTR * 0.6);
+                    if (lowCTRCampaigns.length > 0) {
+                        notWorking += `${lowCTRCampaigns.length} campaign(s) have CTR below 60% of average, signaling creative fatigue or poor targeting.`;
+                    }
+
+                    if (cpaRatio > 1.5) {
+                        recommendations.push({
+                            action: `🛑 Pause or revise "${worstCampaign.name}"`,
+                            reason: `CPA is critically high. Consider: (1) Narrowing audience targeting, (2) Testing new creatives, (3) Adjusting bid strategy, or (4) Pausing if unprofitable.`
+                        });
+                    } else {
+                        recommendations.push({
+                            action: `🔧 Optimize "${worstCampaign.name}" targeting`,
+                            reason: `Above-average CPA suggests targeting refinement needed. Test tighter demographics or exclude low-performing segments.`
+                        });
+                    }
+                }
+
+                // Platform-specific recommendations
+                if (platformMetrics.length > 1) {
+                    const bestPlatform = platformMetrics[0];
+                    const worstPlatform = platformMetrics[platformMetrics.length - 1];
+                    
+                    if (worstPlatform.cpa > bestPlatform.cpa * 1.3) {
+                        recommendations.push({
+                            action: `💰 Reallocate 15% budget from ${worstPlatform.platform} to ${bestPlatform.platform}`,
+                            reason: `${bestPlatform.platform.toUpperCase()} shows ${((worstPlatform.cpa / bestPlatform.cpa - 1) * 100).toFixed(0)}% better efficiency. Test gradual shift to maximize conversions.`
+                        });
+                    }
+                }
+
+                // CTR-based recommendations
+                const lowCTRCampaigns = campaigns.filter(c => c.ctr > 0 && c.ctr < avgCTR * 0.7);
+                if (lowCTRCampaigns.length > 2) {
+                    recommendations.push({
+                        action: `🎬 Launch creative refresh for ${lowCTRCampaigns.length} low-CTR campaigns`,
+                        reason: `Multiple campaigns show engagement issues. Test: (1) New ad formats, (2) Updated messaging, (3) Seasonal/trending content.`
+                    });
+                }
+
+                // Budget optimization
+                if (topSpender && topSpender.conversions > 0) {
+                    const topSpenderCPA = topSpender.spend / topSpender.conversions;
+                    if (topSpenderCPA > avgCPA * 1.2) {
+                        recommendations.push({
+                            action: `⚖️ Review budget allocation for "${topSpender.name}"`,
+                            reason: `Highest spend ($${topSpender.spend.toFixed(2)}) but CPA is above average. Could reallocate some budget to more efficient campaigns.`
+                        });
+                    }
+                }
+
+                // Cross-campaign insights
+                const campaignNames = [...new Set(campaigns.map(c => c.name))];
+                const crossPlatformCampaigns = campaignNames.filter(name => 
+                    campaigns.filter(c => c.name === name).length > 1
+                );
+
+                if (crossPlatformCampaigns.length > 0) {
+                    recommendations.push({
+                        action: `📱 Analyze cross-platform performance for ${crossPlatformCampaigns.length} campaign(s)`,
+                        reason: `These campaigns run on multiple platforms. Compare platform-specific results to identify where each campaign performs best.`
+                    });
+                }
+
+                return {
+                    trends,
+                    working,
+                    notWorking,
+                    recommendations: recommendations.slice(0, 6) // Limit to top 6 recommendations
+                };
             };
 
             const generateCampaignSummary = (campaigns) => {
@@ -394,10 +510,10 @@ Provide a structured analysis in JSON format with keys: trends, working, notWork
                                     {isAnalyzing ? (
                                         <span className="flex items-center">
                                             <div className="loading mr-2"></div>
-                                            Analyzing with AI...
+                                            Analyzing...
                                         </span>
                                     ) : (
-                                        '🤖 Analyze with AI'
+                                        '🎯 Analyze Campaigns'
                                     )}
                                 </button>
                                 <span className="ml-4 text-sm text-gray-600">
@@ -424,7 +540,7 @@ Provide a structured analysis in JSON format with keys: trends, working, notWork
                         {/* AI Insights */}
                         {aiInsights && (
                             <div className="card">
-                                <h2 className="text-2xl font-bold mb-4">🎯 AI-Powered Insights</h2>
+                                <h2 className="text-2xl font-bold mb-4">🎯 Intelligent Campaign Analysis</h2>
                                 
                                 {aiInsights.trends && (
                                     <div className="ai-insight">
