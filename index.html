@@ -10,108 +10,189 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #FF6B35;
+            --secondary: #004E89;
+            --accent: #F7B801;
+            --dark: #1A1A2E;
+            --light: #F8F9FA;
+        }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-card {
+            font-family: 'Work Sans', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+        }
+        
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, var(--secondary) 0%, #003d6b 100%);
             color: white;
             padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
         }
-        .trend-up { color: #10b981; }
-        .trend-down { color: #ef4444; }
-        .tab-active {
-            border-bottom: 2px solid #667eea;
-            color: #667eea;
-        }
-        .loading {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #667eea;
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+            transform: translate(30%, -30%);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
         }
-        .ai-insight {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-left: 4px solid #f59e0b;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 4px;
+        
+        .filter-tag {
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .recommendation {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 4px;
-        }
-        .warning {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border-left: 4px solid #ef4444;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 4px;
-        }
+        
         .btn-primary {
-            background: #667eea;
+            background: var(--primary);
             color: white;
             padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             font-weight: 600;
-            transition: background 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
         }
+        
         .btn-primary:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
         }
+        
         .btn-secondary {
             background: white;
-            color: #667eea;
+            color: var(--secondary);
             padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            border: 2px solid #667eea;
+            border-radius: 8px;
+            border: 2px solid var(--secondary);
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
+        
         .btn-secondary:hover {
-            background: #f3f4f6;
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .creative-suggestion {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left: 4px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .insight-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .trend-up { color: #00b894; font-weight: 700; }
+        .trend-down { color: #d63031; font-weight: 700; }
+        
+        select, input[type="text"] {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .campaign-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .campaign-card:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .campaign-card.selected {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, rgba(0, 78, 137, 0.05) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Main Dashboard Component
         function MarketingDashboard() {
-            const [activeTab, setActiveTab] = useState('overview');
             const [campaigns, setCampaigns] = useState([]);
             const [decisions, setDecisions] = useState([]);
-            const [timeRange, setTimeRange] = useState('month');
+            const [timeRange, setTimeRange] = useState('all');
             const [isAnalyzing, setIsAnalyzing] = useState(false);
             const [aiInsights, setAiInsights] = useState(null);
-            const [selectedView, setSelectedView] = useState('cross-platform');
+            const [selectedCampaign, setSelectedCampaign] = useState(null);
+            const [selectedPlatform, setSelectedPlatform] = useState('all');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [chartType, setChartType] = useState('spend');
+            const [creativeSuggestions, setCreativeSuggestions] = useState(null);
 
-            // Load data from persistent storage on mount
             useEffect(() => {
                 loadData();
             }, []);
@@ -159,9 +240,7 @@
                             return;
                         }
                         
-                        // Aggregate campaigns by name to combine data from multiple months
                         const aggregated = aggregateCampaigns(processedData);
-                        
                         const updatedCampaigns = [...campaigns, ...aggregated];
                         setCampaigns(updatedCampaigns);
                         saveData(updatedCampaigns, decisions);
@@ -174,54 +253,15 @@
                 });
             };
 
-            const aggregateCampaigns = (campaigns) => {
-                // Group campaigns by name and platform
-                const grouped = campaigns.reduce((acc, camp) => {
-                    const key = `${camp.platform}-${camp.name}`;
-                    if (!acc[key]) {
-                        acc[key] = [];
-                    }
-                    acc[key].push(camp);
-                    return acc;
-                }, {});
-
-                // Aggregate metrics for each campaign
-                return Object.entries(grouped).map(([key, camps]) => {
-                    const totalSpend = camps.reduce((sum, c) => sum + c.spend, 0);
-                    const totalConversions = camps.reduce((sum, c) => sum + c.conversions, 0);
-                    const totalClicks = camps.reduce((sum, c) => sum + c.clicks, 0);
-                    const totalImpressions = camps.reduce((sum, c) => sum + c.impressions, 0);
-                    
-                    return {
-                        id: camps[0].id,
-                        platform: camps[0].platform,
-                        name: camps[0].name,
-                        impressions: totalImpressions,
-                        clicks: totalClicks,
-                        spend: totalSpend,
-                        conversions: totalConversions,
-                        date: camps[0].date,
-                        creative: camps[0].creative,
-                        ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
-                        cpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
-                        cpa: totalConversions > 0 ? totalSpend / totalConversions : 0,
-                        monthlyData: camps // Keep individual month data for drilling down
-                    };
-                });
-            };
-
             const processCampaignData = (data, platform) => {
-                // Skip header rows and filter out empty rows
                 const cleanData = data.filter(row => {
                     if (platform === 'google') {
-                        // Google: Skip the first 3 header rows and paused campaigns
                         return row.Campaign && 
                                row.Campaign !== 'Campaign' && 
                                row.Campaign !== 'Campaign performance' &&
                                row['Campaign status'] !== 'Paused' &&
                                (row.Clicks || row.Impr || row.Cost);
                     } else {
-                        // Meta: Skip summary rows and rows with no data
                         return row['Campaign name'] && 
                                row['Campaign name'] !== '' &&
                                (row.Impressions > 0 || row['Amount spent (INR)'] > 0);
@@ -230,7 +270,6 @@
 
                 return cleanData.map(row => {
                     if (platform === 'google') {
-                        // Parse Google Ads data
                         const clicks = parseInt(String(row.Clicks || 0).replace(/,/g, '')) || 0;
                         const impressions = parseInt(String(row['Impr.'] || row.Impr || 0).replace(/,/g, '')) || 0;
                         const cost = parseFloat(String(row.Cost || 0).replace(/,/g, '')) || 0;
@@ -253,7 +292,6 @@
                             cpa: conversions > 0 ? cost / conversions : 0,
                         };
                     } else {
-                        // Parse Meta Ads data
                         const impressions = parseInt(String(row.Impressions || 0).replace(/,/g, '')) || 0;
                         const clicks = parseInt(String(row['Clicks (all)'] || 0).replace(/,/g, '')) || 0;
                         const spend = parseFloat(String(row['Amount spent (INR)'] || 0).replace(/,/g, '')) || 0;
@@ -278,10 +316,41 @@
                             cpa: conversions > 0 ? spend / conversions : 0,
                         };
                     }
-                }).filter(campaign => 
-                    // Only include campaigns with actual data
-                    campaign.impressions > 0 || campaign.spend > 0
-                );
+                }).filter(campaign => campaign.impressions > 0 || campaign.spend > 0);
+            };
+
+            const aggregateCampaigns = (campaigns) => {
+                const grouped = campaigns.reduce((acc, camp) => {
+                    const key = `${camp.platform}-${camp.name}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(camp);
+                    return acc;
+                }, {});
+
+                return Object.entries(grouped).map(([key, camps]) => {
+                    const totalSpend = camps.reduce((sum, c) => sum + c.spend, 0);
+                    const totalConversions = camps.reduce((sum, c) => sum + c.conversions, 0);
+                    const totalClicks = camps.reduce((sum, c) => sum + c.clicks, 0);
+                    const totalImpressions = camps.reduce((sum, c) => sum + c.impressions, 0);
+                    
+                    return {
+                        id: camps[0].id,
+                        platform: camps[0].platform,
+                        name: camps[0].name,
+                        impressions: totalImpressions,
+                        clicks: totalClicks,
+                        spend: totalSpend,
+                        conversions: totalConversions,
+                        date: camps[0].date,
+                        creative: camps[0].creative,
+                        ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
+                        cpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
+                        cpa: totalConversions > 0 ? totalSpend / totalConversions : 0,
+                        monthlyData: camps
+                    };
+                });
             };
 
             const analyzeWithAI = async () => {
@@ -291,206 +360,152 @@
                 }
 
                 setIsAnalyzing(true);
-                
-                // Always use advanced basic analysis (no external API needed)
-                // This provides professional-grade insights without API dependencies
-                const basicInsights = generateBasicInsights(campaigns);
+                const basicInsights = generateBasicInsights(getFilteredCampaigns());
                 setAiInsights(basicInsights);
                 setIsAnalyzing(false);
             };
 
-            const generateBasicInsights = (campaigns) => {
-                const platformGroups = campaigns.reduce((acc, camp) => {
-                    if (!acc[camp.platform]) acc[camp.platform] = [];
-                    acc[camp.platform].push(camp);
-                    return acc;
-                }, {});
+            const generateCreativeSuggestions = (campaign) => {
+                if (!campaign) return;
 
-                // Calculate comprehensive metrics
-                const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
-                const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
-                const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
-                const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+                setIsAnalyzing(true);
+                
+                const suggestions = {
+                    headlines: [],
+                    adCopy: [],
+                    visualConcepts: [],
+                    targetingIdeas: []
+                };
+
+                const avgCTR = campaigns.reduce((sum, c) => sum + c.ctr, 0) / campaigns.length;
+                const needsRefresh = campaign.ctr < avgCTR * 0.7;
+
+                if (needsRefresh) {
+                    suggestions.headlines = [
+                        `"Transform Your Career in ${new Date().getFullYear()}" - Urgency-driven`,
+                        `"Join 50,000+ Professionals Who Chose Us" - Social proof`,
+                        `"Limited Seats: Master ${campaign.name.includes('Data') ? 'Data Science' : 'Tech Skills'} in 6 Months" - Scarcity + Specificity`
+                    ];
+
+                    suggestions.adCopy = [
+                        "Problem-Solution Format: Start with pain point (e.g., 'Stuck in dead-end job?'), then offer solution",
+                        "Benefit-driven: Focus on outcomes ('Land ₹15L+ salary') rather than features",
+                        "Question-based: 'Ready to 10x your earning potential?' engages curiosity"
+                    ];
+
+                    suggestions.visualConcepts = [
+                        "Before/After visual: Show career transformation journey",
+                        "Data visualization: Graph showing salary growth after course completion",
+                        "Student testimonials: Real faces with specific salary numbers and company logos"
+                    ];
+                } else {
+                    suggestions.headlines = [
+                        `Current creative performing well! Consider A/B testing: "${campaign.name} - New Variant A"`,
+                        `Scale winner: Duplicate current ad with 20% budget increase`,
+                        `Test premium positioning: "India's #1 ${campaign.name.split(' ')[0]} Program"`
+                    ];
+
+                    suggestions.adCopy = [
+                        "Your current messaging resonates. Test slight variations in CTA urgency",
+                        "Experiment with longer-form storytelling in description",
+                        "Add trust signals: 'Trusted by Fortune 500 companies'"
+                    ];
+
+                    suggestions.visualConcepts = [
+                        "Keep current visual style but test seasonal variations",
+                        "Create video version of top-performing static ad",
+                        "Test carousel format showcasing multiple success stories"
+                    ];
+                }
+
+                suggestions.targetingIdeas = [
+                    `Lookalike audiences based on ${campaign.conversions > 50 ? 'converters' : 'engaged users'}`,
+                    `Exclude existing students to reduce wasted spend`,
+                    `Layer interest targeting: 'Career Development' + 'Online Learning'`,
+                    `Test age segments: 22-27 vs 28-35 for different messaging`
+                ];
+
+                setCreativeSuggestions(suggestions);
+                setIsAnalyzing(false);
+            };
+
+            const generateBasicInsights = (filteredCampaigns) => {
+                const totalSpend = filteredCampaigns.reduce((sum, c) => sum + c.spend, 0);
+                const totalConversions = filteredCampaigns.reduce((sum, c) => sum + c.conversions, 0);
+                const totalClicks = filteredCampaigns.reduce((sum, c) => sum + c.clicks, 0);
+                const totalImpressions = filteredCampaigns.reduce((sum, c) => sum + c.impressions, 0);
                 
                 const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
                 const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-                const avgCPC = totalClicks > 0 ? totalSpend / totalClicks : 0;
 
-                // Find best and worst performers by multiple metrics
-                const campaignsWithMetrics = campaigns.filter(c => c.conversions > 0).map(c => ({
+                const campaignsWithMetrics = filteredCampaigns.filter(c => c.conversions > 0).map(c => ({
                     ...c,
                     cpa: c.spend / c.conversions,
                     roi: c.conversions > 0 ? (c.conversions * 100 - c.spend) / c.spend : 0
                 }));
 
                 const campaignsByCPA = [...campaignsWithMetrics].sort((a, b) => a.cpa - b.cpa);
-                const campaignsByCTR = [...campaigns].filter(c => c.ctr > 0).sort((a, b) => b.ctr - a.ctr);
-                const campaignsBySpend = [...campaigns].sort((a, b) => b.spend - a.spend);
-                const campaignsByConversions = [...campaigns].sort((a, b) => b.conversions - a.conversions);
-
                 const bestCampaign = campaignsByCPA[0];
                 const worstCampaign = campaignsByCPA[campaignsByCPA.length - 1];
-                const highestCTR = campaignsByCTR[0];
-                const topSpender = campaignsBySpend[0];
-                const topConverter = campaignsByConversions[0];
 
-                // Platform comparison
-                const platformMetrics = Object.entries(platformGroups).map(([platform, camps]) => {
-                    const spend = camps.reduce((sum, c) => sum + c.spend, 0);
-                    const conversions = camps.reduce((sum, c) => sum + c.conversions, 0);
-                    const clicks = camps.reduce((sum, c) => sum + c.clicks, 0);
-                    const impressions = camps.reduce((sum, c) => sum + c.impressions, 0);
-                    return { 
-                        platform, 
-                        cpa: conversions > 0 ? spend / conversions : Infinity,
-                        ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
-                        spend,
-                        conversions
-                    };
-                }).sort((a, b) => a.cpa - b.cpa);
+                let trends = `📊 Analyzing ${filteredCampaigns.length} campaigns with total spend of ₹${totalSpend.toLocaleString('en-IN', {maximumFractionDigits: 0})} generating ${totalConversions} conversions. Average CPA: ₹${avgCPA.toFixed(2)}, Average CTR: ${avgCTR.toFixed(2)}%.`;
 
-                // Generate comprehensive insights
-                let trends = `📊 Portfolio Overview: Analyzing ${campaigns.length} campaigns across ${Object.keys(platformGroups).length} platform(s). `;
-                trends += `Total investment of $${totalSpend.toFixed(2)} generated ${totalConversions} conversions at an average CPA of $${avgCPA.toFixed(2)}. `;
-                trends += `Average CTR is ${avgCTR.toFixed(2)}% with ${totalClicks.toLocaleString()} total clicks from ${totalImpressions.toLocaleString()} impressions. `;
-                
-                if (platformMetrics.length > 1) {
-                    const bestPlatform = platformMetrics[0];
-                    const worstPlatform = platformMetrics[platformMetrics.length - 1];
-                    trends += `${bestPlatform.platform.toUpperCase()} is outperforming ${worstPlatform.platform.toUpperCase()} with ${((worstPlatform.cpa / bestPlatform.cpa - 1) * 100).toFixed(0)}% lower CPA.`;
-                }
+                let working = bestCampaign ? `🎯 "${bestCampaign.name}" leads with CPA of ₹${bestCampaign.cpa.toFixed(2)} - ${((avgCPA / bestCampaign.cpa - 1) * 100).toFixed(0)}% better than average.` : '';
 
-                let working = '';
-                let notWorking = '';
+                let notWorking = worstCampaign && campaignsByCPA.length > 1 ? `⚠️ "${worstCampaign.name}" has CPA of ₹${worstCampaign.cpa.toFixed(2)}, ${((worstCampaign.cpa / avgCPA - 1) * 100).toFixed(0)}% above average.` : '';
+
                 let recommendations = [];
-
-                // What's working
+                
                 if (bestCampaign) {
-                    working = `🎯 Top Performers: "${bestCampaign.name}" on ${bestCampaign.platform} leads with the lowest CPA of $${bestCampaign.cpa.toFixed(2)}. `;
-                    
-                    if (topConverter && topConverter.id !== bestCampaign.id) {
-                        working += `"${topConverter.name}" drives the most conversions (${topConverter.conversions}). `;
-                    }
-                    
-                    if (highestCTR && highestCTR.id !== bestCampaign.id) {
-                        working += `"${highestCTR.name}" has the highest engagement with ${highestCTR.ctr.toFixed(2)}% CTR.`;
-                    }
-
                     recommendations.push({
-                        action: `🚀 Scale "${bestCampaign.name}" by 20-30%`,
-                        reason: `Lowest CPA ($${bestCampaign.cpa.toFixed(2)}) indicates strong product-market fit and efficient targeting. Room to scale before hitting diminishing returns.`
-                    });
-
-                    if (highestCTR && highestCTR.ctr > avgCTR * 1.5) {
-                        recommendations.push({
-                            action: `🎨 Repurpose creatives from "${highestCTR.name}"`,
-                            reason: `CTR of ${highestCTR.ctr.toFixed(2)}% is ${((highestCTR.ctr / avgCTR - 1) * 100).toFixed(0)}% above average. Creative resonates strongly with audience.`
-                        });
-                    }
-                }
-
-                // What's not working
-                if (worstCampaign && campaignsByCPA.length > 2) {
-                    const cpaRatio = worstCampaign.cpa / avgCPA;
-                    notWorking = `⚠️ Underperformers: "${worstCampaign.name}" has a CPA of $${worstCampaign.cpa.toFixed(2)}, which is ${((cpaRatio - 1) * 100).toFixed(0)}% above your average. `;
-                    
-                    const lowCTRCampaigns = campaigns.filter(c => c.ctr > 0 && c.ctr < avgCTR * 0.6);
-                    if (lowCTRCampaigns.length > 0) {
-                        notWorking += `${lowCTRCampaigns.length} campaign(s) have CTR below 60% of average, signaling creative fatigue or poor targeting.`;
-                    }
-
-                    if (cpaRatio > 1.5) {
-                        recommendations.push({
-                            action: `🛑 Pause or revise "${worstCampaign.name}"`,
-                            reason: `CPA is critically high. Consider: (1) Narrowing audience targeting, (2) Testing new creatives, (3) Adjusting bid strategy, or (4) Pausing if unprofitable.`
-                        });
-                    } else {
-                        recommendations.push({
-                            action: `🔧 Optimize "${worstCampaign.name}" targeting`,
-                            reason: `Above-average CPA suggests targeting refinement needed. Test tighter demographics or exclude low-performing segments.`
-                        });
-                    }
-                }
-
-                // Platform-specific recommendations
-                if (platformMetrics.length > 1) {
-                    const bestPlatform = platformMetrics[0];
-                    const worstPlatform = platformMetrics[platformMetrics.length - 1];
-                    
-                    if (worstPlatform.cpa > bestPlatform.cpa * 1.3) {
-                        recommendations.push({
-                            action: `💰 Reallocate 15% budget from ${worstPlatform.platform} to ${bestPlatform.platform}`,
-                            reason: `${bestPlatform.platform.toUpperCase()} shows ${((worstPlatform.cpa / bestPlatform.cpa - 1) * 100).toFixed(0)}% better efficiency. Test gradual shift to maximize conversions.`
-                        });
-                    }
-                }
-
-                // CTR-based recommendations
-                const lowCTRCampaigns = campaigns.filter(c => c.ctr > 0 && c.ctr < avgCTR * 0.7);
-                if (lowCTRCampaigns.length > 2) {
-                    recommendations.push({
-                        action: `🎬 Launch creative refresh for ${lowCTRCampaigns.length} low-CTR campaigns`,
-                        reason: `Multiple campaigns show engagement issues. Test: (1) New ad formats, (2) Updated messaging, (3) Seasonal/trending content.`
+                        action: `Scale "${bestCampaign.name}" by 25%`,
+                        reason: `Lowest CPA with proven conversion efficiency`
                     });
                 }
 
-                // Budget optimization
-                if (topSpender && topSpender.conversions > 0) {
-                    const topSpenderCPA = topSpender.spend / topSpender.conversions;
-                    if (topSpenderCPA > avgCPA * 1.2) {
-                        recommendations.push({
-                            action: `⚖️ Review budget allocation for "${topSpender.name}"`,
-                            reason: `Highest spend ($${topSpender.spend.toFixed(2)}) but CPA is above average. Could reallocate some budget to more efficient campaigns.`
-                        });
-                    }
-                }
-
-                // Cross-campaign insights
-                const campaignNames = [...new Set(campaigns.map(c => c.name))];
-                const crossPlatformCampaigns = campaignNames.filter(name => 
-                    campaigns.filter(c => c.name === name).length > 1
-                );
-
-                if (crossPlatformCampaigns.length > 0) {
+                if (worstCampaign && worstCampaign.cpa > avgCPA * 1.5) {
                     recommendations.push({
-                        action: `📱 Analyze cross-platform performance for ${crossPlatformCampaigns.length} campaign(s)`,
-                        reason: `These campaigns run on multiple platforms. Compare platform-specific results to identify where each campaign performs best.`
+                        action: `Pause or revise "${worstCampaign.name}"`,
+                        reason: `CPA critically high - reallocate budget to better performers`
                     });
                 }
 
-                return {
-                    trends,
-                    working,
-                    notWorking,
-                    recommendations: recommendations.slice(0, 6) // Limit to top 6 recommendations
-                };
+                const lowCTR = filteredCampaigns.filter(c => c.ctr > 0 && c.ctr < avgCTR * 0.7);
+                if (lowCTR.length > 0) {
+                    recommendations.push({
+                        action: `Refresh creatives for ${lowCTR.length} campaigns`,
+                        reason: `CTR significantly below average indicates ad fatigue`
+                    });
+                }
+
+                return { trends, working, notWorking, recommendations };
             };
 
-            const generateCampaignSummary = (campaigns) => {
-                const platformGroups = campaigns.reduce((acc, camp) => {
-                    if (!acc[camp.platform]) acc[camp.platform] = [];
-                    acc[camp.platform].push(camp);
-                    return acc;
-                }, {});
+            const getFilteredCampaigns = () => {
+                let filtered = campaigns;
 
-                let summary = '';
-                Object.entries(platformGroups).forEach(([platform, camps]) => {
-                    const totalSpend = camps.reduce((sum, c) => sum + c.spend, 0);
-                    const totalConversions = camps.reduce((sum, c) => sum + c.conversions, 0);
-                    const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
-                    
-                    summary += `\n${platform.toUpperCase()}:\n`;
-                    summary += `- Campaigns: ${camps.length}\n`;
-                    summary += `- Total Spend: $${totalSpend.toFixed(2)}\n`;
-                    summary += `- Conversions: ${totalConversions}\n`;
-                    summary += `- Avg CPA: $${avgCPA.toFixed(2)}\n`;
-                    
-                    camps.slice(0, 3).forEach(c => {
-                        summary += `  • ${c.name}: $${c.spend} spend, ${c.conversions} conv, CTR: ${c.ctr}%\n`;
-                    });
-                });
+                if (selectedPlatform !== 'all') {
+                    filtered = filtered.filter(c => c.platform === selectedPlatform);
+                }
 
-                return summary;
+                if (searchTerm) {
+                    filtered = filtered.filter(c => 
+                        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
+
+                return filtered;
+            };
+
+            const clearAllData = () => {
+                if (confirm('Clear all data? This cannot be undone.')) {
+                    setCampaigns([]);
+                    setDecisions([]);
+                    setAiInsights(null);
+                    setSelectedCampaign(null);
+                    setCreativeSuggestions(null);
+                    saveData([], []);
+                }
             };
 
             const addDecision = (recommendation) => {
@@ -500,7 +515,6 @@
                     reason: recommendation.reason,
                     status: 'pending',
                     createdAt: new Date().toISOString(),
-                    completedAt: null
                 };
                 const updatedDecisions = [...decisions, newDecision];
                 setDecisions(updatedDecisions);
@@ -515,461 +529,540 @@
                 saveData(campaigns, updatedDecisions);
             };
 
-            const clearAllData = () => {
-                if (confirm('Are you sure you want to clear all campaign data and decisions? This cannot be undone.')) {
-                    setCampaigns([]);
-                    setDecisions([]);
-                    setAiInsights(null);
-                    saveData([], []);
-                    alert('All data cleared successfully!');
-                }
-            };
-
-            const getFilteredCampaigns = () => {
-                // Filter by time range
-                const now = new Date();
-                const ranges = {
-                    day: 1,
-                    week: 7,
-                    month: 30,
-                    quarter: 90,
-                    ytd: Math.floor((now - new Date(now.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24))
-                };
-
-                const daysBack = ranges[timeRange] || 30;
-                const cutoffDate = new Date(now - daysBack * 24 * 60 * 60 * 1000);
-
-                return campaigns.filter(c => new Date(c.date) >= cutoffDate);
-            };
-
-            const getCrossPlatformView = () => {
-                const filtered = getFilteredCampaigns();
-                const campaignGroups = filtered.reduce((acc, camp) => {
-                    if (!acc[camp.name]) acc[camp.name] = [];
-                    acc[camp.name].push(camp);
-                    return acc;
-                }, {});
-
-                return Object.entries(campaignGroups).map(([name, camps]) => ({
-                    name,
-                    platforms: camps.length,
-                    spend: camps.reduce((sum, c) => sum + c.spend, 0),
-                    conversions: camps.reduce((sum, c) => sum + c.conversions, 0),
-                    impressions: camps.reduce((sum, c) => sum + c.impressions, 0),
-                    clicks: camps.reduce((sum, c) => sum + c.clicks, 0),
-                    details: camps
-                }));
-            };
-
-            const getPlatformView = () => {
-                const filtered = getFilteredCampaigns();
-                const platformGroups = filtered.reduce((acc, camp) => {
-                    if (!acc[camp.platform]) acc[camp.platform] = [];
-                    acc[camp.platform].push(camp);
-                    return acc;
-                }, {});
-
-                return Object.entries(platformGroups).map(([platform, camps]) => ({
-                    platform,
-                    campaigns: camps.length,
-                    spend: camps.reduce((sum, c) => sum + c.spend, 0),
-                    conversions: camps.reduce((sum, c) => sum + c.conversions, 0),
-                    impressions: camps.reduce((sum, c) => sum + c.impressions, 0),
-                    clicks: camps.reduce((sum, c) => sum + c.clicks, 0),
-                    details: camps
-                }));
-            };
+            const filteredCampaigns = getFilteredCampaigns();
 
             return (
-                <div className="min-h-screen">
+                <div className="min-h-screen p-4">
                     {/* Header */}
-                    <header className="bg-white shadow-sm">
-                        <div className="max-w-7xl mx-auto px-4 py-4">
-                            <h1 className="text-3xl font-bold text-gray-900">Marketing Analytics Dashboard</h1>
-                            <p className="text-gray-600 mt-1">AI-Powered Campaign Intelligence</p>
+                    <header className="glass rounded-2xl p-6 mb-6 fade-in">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-4xl font-bold text-gray-900 mono">Marketing Analytics</h1>
+                                <p className="text-gray-600 mt-2">Performance Intelligence Dashboard</p>
+                            </div>
+                            {campaigns.length > 0 && (
+                                <button onClick={clearAllData} className="text-sm text-red-600 hover:text-red-800 font-semibold">
+                                    🗑️ Clear Data
+                                </button>
+                            )}
                         </div>
                     </header>
 
-                    {/* Main Content */}
-                    <main className="max-w-7xl mx-auto px-4 py-6">
-                        {/* Upload Section */}
-                        <div className="card">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold">Upload Campaign Data</h2>
-                                {campaigns.length > 0 && (
-                                    <button 
-                                        onClick={clearAllData}
-                                        className="text-sm text-red-600 hover:text-red-800 font-semibold"
-                                    >
-                                        🗑️ Clear All Data
-                                    </button>
-                                )}
+                    {/* Upload Section */}
+                    <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                        <h2 className="text-xl font-bold mb-4">Upload Campaign Data</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block mb-2 font-semibold">Google Ads CSV</label>
+                                <input 
+                                    type="file" 
+                                    accept=".csv"
+                                    onChange={(e) => handleFileUpload(e, 'google')}
+                                    className="w-full p-2 border rounded"
+                                />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block mb-2 font-semibold">Google Ads CSV</label>
-                                    <input 
-                                        type="file" 
-                                        accept=".csv"
-                                        onChange={(e) => handleFileUpload(e, 'google')}
-                                        className="w-full p-2 border rounded"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Export from Google Ads: Campaigns → Download → CSV</p>
-                                </div>
-                                <div>
-                                    <label className="block mb-2 font-semibold">Meta Ads CSV</label>
-                                    <input 
-                                        type="file" 
-                                        accept=".csv"
-                                        onChange={(e) => handleFileUpload(e, 'meta')}
-                                        className="w-full p-2 border rounded"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Export from Meta Ads Manager: Export table data → CSV</p>
-                                </div>
+                            <div>
+                                <label className="block mb-2 font-semibold">Meta Ads CSV</label>
+                                <input 
+                                    type="file" 
+                                    accept=".csv"
+                                    onChange={(e) => handleFileUpload(e, 'meta')}
+                                    className="w-full p-2 border rounded"
+                                />
                             </div>
+                        </div>
+                        {campaigns.length > 0 && (
                             <div className="mt-4">
-                                <button 
-                                    onClick={analyzeWithAI}
-                                    disabled={isAnalyzing || campaigns.length === 0}
-                                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isAnalyzing ? (
-                                        <span className="flex items-center">
-                                            <div className="loading mr-2"></div>
-                                            Analyzing...
-                                        </span>
-                                    ) : (
-                                        '🎯 Analyze Campaigns'
-                                    )}
+                                <button onClick={analyzeWithAI} disabled={isAnalyzing} className="btn-primary">
+                                    {isAnalyzing ? '⚙️ Analyzing...' : '🎯 Analyze Campaigns'}
                                 </button>
-                                <span className="ml-4 text-sm text-gray-600">
-                                    {campaigns.length} campaigns loaded
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Time Range Selector */}
-                        <div className="card">
-                            <div className="flex gap-2">
-                                {['day', 'week', 'month', 'quarter', 'ytd'].map(range => (
-                                    <button
-                                        key={range}
-                                        onClick={() => setTimeRange(range)}
-                                        className={`px-4 py-2 rounded ${timeRange === range ? 'bg-purple-600 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        {range.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* AI Insights */}
-                        {aiInsights && (
-                            <div className="card">
-                                <h2 className="text-2xl font-bold mb-4">🎯 Intelligent Campaign Analysis</h2>
-                                
-                                {aiInsights.trends && (
-                                    <div className="ai-insight">
-                                        <h3 className="font-bold mb-2">📊 Key Trends</h3>
-                                        <p className="text-gray-800">{aiInsights.trends}</p>
-                                    </div>
-                                )}
-
-                                {aiInsights.working && (
-                                    <div className="recommendation">
-                                        <h3 className="font-bold mb-2">✅ What's Working (Double Down)</h3>
-                                        <p className="text-gray-800">{aiInsights.working}</p>
-                                    </div>
-                                )}
-
-                                {aiInsights.notWorking && (
-                                    <div className="warning">
-                                        <h3 className="font-bold mb-2">⚠️ Needs Immediate Attention</h3>
-                                        <p className="text-gray-800">{aiInsights.notWorking}</p>
-                                    </div>
-                                )}
-
-                                {aiInsights.recommendations && aiInsights.recommendations.length > 0 && (
-                                    <div className="mt-4">
-                                        <h3 className="font-bold mb-3 text-lg">💡 Actionable Recommendations</h3>
-                                        {aiInsights.recommendations.map((rec, idx) => (
-                                            <div key={idx} className="bg-white p-3 mb-2 rounded border-l-4 border-blue-500">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1">
-                                                        <p className="font-semibold">{rec.action}</p>
-                                                        <p className="text-sm text-gray-600 mt-1">{rec.reason}</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => addDecision(rec)}
-                                                        className="btn-secondary ml-4 text-sm py-1 px-3"
-                                                    >
-                                                        Track Decision
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                <span className="ml-4 text-sm text-gray-600 mono">{campaigns.length} campaigns loaded</span>
                             </div>
                         )}
+                    </div>
 
-                        {/* View Selector */}
-                        <div className="card">
-                            <div className="flex gap-4 mb-4">
-                                <button
-                                    onClick={() => setSelectedView('cross-platform')}
-                                    className={`px-4 py-2 font-semibold ${selectedView === 'cross-platform' ? 'tab-active' : 'text-gray-600'}`}
-                                >
-                                    Cross-Platform View
-                                </button>
-                                <button
-                                    onClick={() => setSelectedView('platform')}
-                                    className={`px-4 py-2 font-semibold ${selectedView === 'platform' ? 'tab-active' : 'text-gray-600'}`}
-                                >
-                                    Platform View
-                                </button>
+                    {campaigns.length > 0 && (
+                        <>
+                            {/* Filters & Controls */}
+                            <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                                <h3 className="text-lg font-bold mb-4">Filters & Views</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block mb-2 font-semibold text-sm">Platform</label>
+                                        <select 
+                                            value={selectedPlatform}
+                                            onChange={(e) => setSelectedPlatform(e.target.value)}
+                                            className="w-full"
+                                        >
+                                            <option value="all">All Platforms</option>
+                                            <option value="google">Google Ads</option>
+                                            <option value="meta">Meta Ads</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 font-semibold text-sm">Search Campaign</label>
+                                        <input 
+                                            type="text"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Type to search..."
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 font-semibold text-sm">Chart Metric</label>
+                                        <select 
+                                            value={chartType}
+                                            onChange={(e) => setChartType(e.target.value)}
+                                            className="w-full"
+                                        >
+                                            <option value="spend">Spend (₹)</option>
+                                            <option value="conversions">Conversions</option>
+                                            <option value="ctr">CTR (%)</option>
+                                            <option value="cpa">CPA (₹)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {(selectedPlatform !== 'all' || searchTerm) && (
+                                    <div className="mt-4 flex gap-2">
+                                        {selectedPlatform !== 'all' && (
+                                            <span className="filter-tag">
+                                                {selectedPlatform.toUpperCase()}
+                                                <button onClick={() => setSelectedPlatform('all')}>✕</button>
+                                            </span>
+                                        )}
+                                        {searchTerm && (
+                                            <span className="filter-tag">
+                                                "{searchTerm}"
+                                                <button onClick={() => setSearchTerm('')}>✕</button>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {selectedView === 'cross-platform' ? (
-                                <CrossPlatformView data={getCrossPlatformView()} />
-                            ) : (
-                                <PlatformView data={getPlatformView()} />
+                            {/* Performance Overview */}
+                            <PerformanceOverview campaigns={filteredCampaigns} chartType={chartType} />
+
+                            {/* Campaign List */}
+                            <CampaignList 
+                                campaigns={filteredCampaigns} 
+                                selectedCampaign={selectedCampaign}
+                                onSelectCampaign={(c) => {
+                                    setSelectedCampaign(c);
+                                    generateCreativeSuggestions(c);
+                                }}
+                            />
+
+                            {/* Campaign Deep Dive */}
+                            {selectedCampaign && (
+                                <CampaignDeepDive 
+                                    campaign={selectedCampaign}
+                                    creativeSuggestions={creativeSuggestions}
+                                    onClose={() => {
+                                        setSelectedCampaign(null);
+                                        setCreativeSuggestions(null);
+                                    }}
+                                />
                             )}
+
+                            {/* Insights */}
+                            {aiInsights && (
+                                <InsightsPanel 
+                                    insights={aiInsights}
+                                    onTrackDecision={addDecision}
+                                />
+                            )}
+
+                            {/* Decision Tracker */}
+                            {decisions.length > 0 && (
+                                <DecisionTracker 
+                                    decisions={decisions}
+                                    onUpdateStatus={updateDecisionStatus}
+                                />
+                            )}
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // Performance Overview Component with Charts
+        function PerformanceOverview({ campaigns, chartType }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current && campaigns.length > 0) {
+                    const ctx = chartRef.current.getContext('2d');
+                    
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    const topCampaigns = [...campaigns]
+                        .sort((a, b) => b.spend - a.spend)
+                        .slice(0, 10);
+
+                    const labels = topCampaigns.map(c => c.name.substring(0, 25) + (c.name.length > 25 ? '...' : ''));
+                    
+                    let data, label, backgroundColor;
+                    
+                    switch(chartType) {
+                        case 'spend':
+                            data = topCampaigns.map(c => c.spend);
+                            label = 'Spend (₹)';
+                            backgroundColor = '#FF6B35';
+                            break;
+                        case 'conversions':
+                            data = topCampaigns.map(c => c.conversions);
+                            label = 'Conversions';
+                            backgroundColor = '#00b894';
+                            break;
+                        case 'ctr':
+                            data = topCampaigns.map(c => c.ctr);
+                            label = 'CTR (%)';
+                            backgroundColor = '#F7B801';
+                            break;
+                        case 'cpa':
+                            data = topCampaigns.map(c => c.cpa);
+                            label = 'CPA (₹)';
+                            backgroundColor = '#6c5ce7';
+                            break;
+                    }
+
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: label,
+                                data: data,
+                                backgroundColor: backgroundColor,
+                                borderRadius: 8,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [campaigns, chartType]);
+
+            const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
+            const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
+            const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
+            const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+            const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+            const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
+            return (
+                <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                    <h2 className="text-2xl font-bold mb-6">Performance Overview</h2>
+                    
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="metric-card">
+                            <div className="text-sm opacity-90 mb-1">Total Spend</div>
+                            <div className="text-2xl font-bold mono">₹{totalSpend.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                         </div>
+                        <div className="metric-card">
+                            <div className="text-sm opacity-90 mb-1">Conversions</div>
+                            <div className="text-2xl font-bold mono">{totalConversions.toLocaleString()}</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="text-sm opacity-90 mb-1">Avg CPA</div>
+                            <div className="text-2xl font-bold mono">₹{avgCPA.toFixed(0)}</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="text-sm opacity-90 mb-1">Avg CTR</div>
+                            <div className="text-2xl font-bold mono">{avgCTR.toFixed(2)}%</div>
+                        </div>
+                    </div>
 
-                        {/* Decision Tracker */}
-                        <DecisionTracker 
-                            decisions={decisions}
-                            onUpdateStatus={updateDecisionStatus}
-                        />
-                    </main>
+                    {/* Chart */}
+                    <div className="chart-container">
+                        <h3 className="font-bold mb-4">Top 10 Campaigns by {chartType.toUpperCase()}</h3>
+                        <div style={{height: '300px'}}>
+                            <canvas ref={chartRef}></canvas>
+                        </div>
+                    </div>
                 </div>
             );
         }
 
-        // Cross-Platform View Component
-        function CrossPlatformView({ data }) {
-            const [expandedCampaign, setExpandedCampaign] = useState(null);
-
-            if (data.length === 0) {
-                return <p className="text-gray-500">No campaign data available. Upload CSV files to get started.</p>;
-            }
-
+        // Campaign List Component
+        function CampaignList({ campaigns, selectedCampaign, onSelectCampaign }) {
             return (
-                <div>
-                    <h3 className="text-lg font-bold mb-3">Campaigns Across Platforms</h3>
-                    {data.map((campaign, idx) => {
-                        const cpa = campaign.conversions > 0 ? campaign.spend / campaign.conversions : 0;
-                        const ctr = campaign.clicks > 0 ? (campaign.clicks / campaign.impressions) * 100 : 0;
-
-                        return (
-                            <div key={idx} className="mb-4 border rounded-lg overflow-hidden">
-                                <div 
-                                    className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100"
-                                    onClick={() => setExpandedCampaign(expandedCampaign === idx ? null : idx)}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h4 className="font-bold text-lg">{campaign.name}</h4>
-                                            <p className="text-sm text-gray-600">Active on {campaign.platforms} platform(s)</p>
+                <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                    <h2 className="text-2xl font-bold mb-4">Campaigns ({campaigns.length})</h2>
+                    <div className="max-h-96 overflow-y-auto">
+                        {campaigns.map(campaign => (
+                            <div 
+                                key={campaign.id}
+                                className={`campaign-card ${selectedCampaign?.id === campaign.id ? 'selected' : ''}`}
+                                onClick={() => onSelectCampaign(campaign)}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="font-bold text-lg">{campaign.name}</h3>
+                                            <span className="insight-badge">{campaign.platform}</span>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-2xl font-bold">${campaign.spend.toFixed(2)}</p>
-                                            <p className="text-sm text-gray-600">{campaign.conversions} conversions</p>
+                                        <div className="grid grid-cols-4 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-gray-500">Spend:</span>
+                                                <span className="ml-1 font-semibold">₹{campaign.spend.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">Conv:</span>
+                                                <span className="ml-1 font-semibold">{campaign.conversions}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">CPA:</span>
+                                                <span className="ml-1 font-semibold">₹{campaign.cpa.toFixed(0)}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">CTR:</span>
+                                                <span className="ml-1 font-semibold">{campaign.ctr.toFixed(2)}%</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-4 mt-3">
-                                        <div>
-                                            <p className="text-xs text-gray-500">CPA</p>
-                                            <p className="font-semibold">${cpa.toFixed(2)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">CTR</p>
-                                            <p className="font-semibold">{ctr.toFixed(2)}%</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Impressions</p>
-                                            <p className="font-semibold">{campaign.impressions.toLocaleString()}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Clicks</p>
-                                            <p className="font-semibold">{campaign.clicks.toLocaleString()}</p>
-                                        </div>
+                                    <div className="text-right">
+                                        {selectedCampaign?.id === campaign.id ? (
+                                            <span className="text-sm text-blue-600 font-semibold">Selected →</span>
+                                        ) : (
+                                            <span className="text-sm text-gray-400">Click for details</span>
+                                        )}
                                     </div>
                                 </div>
-                                
-                                {expandedCampaign === idx && (
-                                    <div className="bg-white p-4 border-t">
-                                        <h5 className="font-bold mb-2">Platform Breakdown:</h5>
-                                        {campaign.details.map((detail, dIdx) => (
-                                            <div key={dIdx} className="mb-3 p-3 bg-gray-50 rounded">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="font-semibold capitalize">{detail.platform}</span>
-                                                    <span className="text-sm text-gray-600">{detail.date}</span>
-                                                </div>
-                                                <div className="grid grid-cols-4 gap-2 text-sm">
-                                                    <div>
-                                                        <span className="text-gray-500">Spend:</span>
-                                                        <span className="ml-1 font-semibold">${detail.spend.toFixed(2)}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">Conv:</span>
-                                                        <span className="ml-1 font-semibold">{detail.conversions}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">CPC:</span>
-                                                        <span className="ml-1 font-semibold">${detail.cpc.toFixed(2)}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">CTR:</span>
-                                                        <span className="ml-1 font-semibold">{detail.ctr.toFixed(2)}%</span>
-                                                    </div>
-                                                </div>
-                                                {detail.creative && (
-                                                    <div className="mt-2 text-sm">
-                                                        <span className="text-gray-500">Creative:</span>
-                                                        <span className="ml-1">{detail.creative}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
             );
         }
 
-        // Platform View Component
-        function PlatformView({ data }) {
-            const [expandedPlatform, setExpandedPlatform] = useState(null);
+        // Campaign Deep Dive Component
+        function CampaignDeepDive({ campaign, creativeSuggestions, onClose }) {
+            const trendChartRef = useRef(null);
+            const trendChartInstance = useRef(null);
 
-            if (data.length === 0) {
-                return <p className="text-gray-500">No campaign data available. Upload CSV files to get started.</p>;
-            }
+            useEffect(() => {
+                if (trendChartRef.current && campaign.monthlyData && campaign.monthlyData.length > 1) {
+                    const ctx = trendChartRef.current.getContext('2d');
+                    
+                    if (trendChartInstance.current) {
+                        trendChartInstance.current.destroy();
+                    }
+
+                    const sortedData = [...campaign.monthlyData].sort((a, b) => 
+                        new Date(a.date) - new Date(b.date)
+                    );
+
+                    trendChartInstance.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: sortedData.map(d => d.date),
+                            datasets: [
+                                {
+                                    label: 'Spend (₹)',
+                                    data: sortedData.map(d => d.spend),
+                                    borderColor: '#FF6B35',
+                                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                                    yAxisID: 'y',
+                                },
+                                {
+                                    label: 'Conversions',
+                                    data: sortedData.map(d => d.conversions),
+                                    borderColor: '#00b894',
+                                    backgroundColor: 'rgba(0, 184, 148, 0.1)',
+                                    yAxisID: 'y1',
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    title: {
+                                        display: true,
+                                        text: 'Spend (₹)'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    position: 'right',
+                                    title: {
+                                        display: true,
+                                        text: 'Conversions'
+                                    },
+                                    grid: {
+                                        drawOnChartArea: false,
+                                    },
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [campaign]);
 
             return (
-                <div>
-                    <h3 className="text-lg font-bold mb-3">Performance by Platform</h3>
-                    {data.map((platform, idx) => {
-                        const cpa = platform.conversions > 0 ? platform.spend / platform.conversions : 0;
-                        const ctr = platform.clicks > 0 ? (platform.clicks / platform.impressions) * 100 : 0;
+                <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold">{campaign.name}</h2>
+                            <span className="insight-badge mt-2 inline-block">{campaign.platform.toUpperCase()}</span>
+                        </div>
+                        <button onClick={onClose} className="text-2xl text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
 
-                        return (
-                            <div key={idx} className="mb-4 border rounded-lg overflow-hidden">
-                                <div 
-                                    className="bg-gray-50 p-4 cursor-pointer hover:bg-gray-100"
-                                    onClick={() => setExpandedPlatform(expandedPlatform === idx ? null : idx)}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h4 className="font-bold text-lg capitalize">{platform.platform}</h4>
-                                            <p className="text-sm text-gray-600">{platform.campaigns} active campaign(s)</p>
+                    {/* Performance Trend */}
+                    {campaign.monthlyData && campaign.monthlyData.length > 1 && (
+                        <div className="chart-container mb-6">
+                            <h3 className="font-bold mb-4">Performance Trend</h3>
+                            <div style={{height: '250px'}}>
+                                <canvas ref={trendChartRef}></canvas>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Creative Suggestions */}
+                    {creativeSuggestions && (
+                        <div className="mt-6">
+                            <h3 className="text-xl font-bold mb-4">🎨 AI Creative Suggestions</h3>
+                            
+                            <div className="creative-suggestion mb-4">
+                                <h4 className="font-bold mb-2">Headlines</h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {creativeSuggestions.headlines.map((h, i) => (
+                                        <li key={i} className="text-sm">{h}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="creative-suggestion mb-4">
+                                <h4 className="font-bold mb-2">Ad Copy Approaches</h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {creativeSuggestions.adCopy.map((a, i) => (
+                                        <li key={i} className="text-sm">{a}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="creative-suggestion mb-4">
+                                <h4 className="font-bold mb-2">Visual Concepts</h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {creativeSuggestions.visualConcepts.map((v, i) => (
+                                        <li key={i} className="text-sm">{v}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="creative-suggestion">
+                                <h4 className="font-bold mb-2">Targeting Ideas</h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {creativeSuggestions.targetingIdeas.map((t, i) => (
+                                        <li key={i} className="text-sm">{t}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Insights Panel Component
+        function InsightsPanel({ insights, onTrackDecision }) {
+            return (
+                <div className="glass rounded-2xl p-6 mb-6 fade-in">
+                    <h2 className="text-2xl font-bold mb-4">🎯 Campaign Insights</h2>
+                    
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded">
+                        <h3 className="font-bold mb-2">📊 Overview</h3>
+                        <p>{insights.trends}</p>
+                    </div>
+
+                    {insights.working && (
+                        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4 rounded">
+                            <h3 className="font-bold mb-2">✅ What's Working</h3>
+                            <p>{insights.working}</p>
+                        </div>
+                    )}
+
+                    {insights.notWorking && (
+                        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+                            <h3 className="font-bold mb-2">⚠️ Needs Attention</h3>
+                            <p>{insights.notWorking}</p>
+                        </div>
+                    )}
+
+                    {insights.recommendations && insights.recommendations.length > 0 && (
+                        <div className="mt-4">
+                            <h3 className="font-bold mb-3">💡 Recommendations</h3>
+                            {insights.recommendations.map((rec, idx) => (
+                                <div key={idx} className="bg-white p-4 mb-2 rounded border-l-4 border-yellow-500">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <p className="font-semibold">{rec.action}</p>
+                                            <p className="text-sm text-gray-600 mt-1">{rec.reason}</p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-2xl font-bold">${platform.spend.toFixed(2)}</p>
-                                            <p className="text-sm text-gray-600">{platform.conversions} conversions</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-4 gap-4 mt-3">
-                                        <div>
-                                            <p className="text-xs text-gray-500">Avg CPA</p>
-                                            <p className="font-semibold">${cpa.toFixed(2)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Avg CTR</p>
-                                            <p className="font-semibold">{ctr.toFixed(2)}%</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Total Impressions</p>
-                                            <p className="font-semibold">{platform.impressions.toLocaleString()}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500">Total Clicks</p>
-                                            <p className="font-semibold">{platform.clicks.toLocaleString()}</p>
-                                        </div>
+                                        <button onClick={() => onTrackDecision(rec)} className="btn-secondary ml-4 text-sm py-2 px-3">
+                                            Track
+                                        </button>
                                     </div>
                                 </div>
-                                
-                                {expandedPlatform === idx && (
-                                    <div className="bg-white p-4 border-t">
-                                        <h5 className="font-bold mb-2">Campaign Breakdown:</h5>
-                                        {platform.details.map((campaign, cIdx) => (
-                                            <div key={cIdx} className="mb-3 p-3 bg-gray-50 rounded">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="font-semibold">{campaign.name}</span>
-                                                    <span className="text-sm text-gray-600">{campaign.date}</span>
-                                                </div>
-                                                <div className="grid grid-cols-5 gap-2 text-sm">
-                                                    <div>
-                                                        <span className="text-gray-500">Spend:</span>
-                                                        <span className="ml-1 font-semibold">${campaign.spend.toFixed(2)}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">Conv:</span>
-                                                        <span className="ml-1 font-semibold">{campaign.conversions}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">CPA:</span>
-                                                        <span className="ml-1 font-semibold">${campaign.cpa.toFixed(2)}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">CTR:</span>
-                                                        <span className="ml-1 font-semibold">{campaign.ctr.toFixed(2)}%</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-gray-500">Impr:</span>
-                                                        <span className="ml-1 font-semibold">{campaign.impressions.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-                                                {campaign.creative && (
-                                                    <div className="mt-2 text-sm">
-                                                        <span className="text-gray-500">Creative:</span>
-                                                        <span className="ml-1">{campaign.creative}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
 
         // Decision Tracker Component
         function DecisionTracker({ decisions, onUpdateStatus }) {
-            if (decisions.length === 0) return null;
-
-            const pendingDecisions = decisions.filter(d => d.status === 'pending');
-            const completedDecisions = decisions.filter(d => d.status === 'completed');
+            const pending = decisions.filter(d => d.status === 'pending');
+            const completed = decisions.filter(d => d.status === 'completed');
 
             return (
-                <div className="card">
+                <div className="glass rounded-2xl p-6 mb-6 fade-in">
                     <h2 className="text-2xl font-bold mb-4">📋 Decision Tracker</h2>
                     
-                    {pendingDecisions.length > 0 && (
+                    {pending.length > 0 && (
                         <div className="mb-6">
-                            <h3 className="font-bold mb-3 text-lg">Pending Actions ({pendingDecisions.length})</h3>
-                            {pendingDecisions.map(decision => (
-                                <div key={decision.id} className="bg-yellow-50 p-4 mb-2 rounded border-l-4 border-yellow-500">
+                            <h3 className="font-bold mb-3">Pending ({pending.length})</h3>
+                            {pending.map(d => (
+                                <div key={d.id} className="bg-yellow-50 p-4 mb-2 rounded border-l-4 border-yellow-500">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
-                                            <p className="font-semibold">{decision.action}</p>
-                                            <p className="text-sm text-gray-600 mt-1">{decision.reason}</p>
-                                            <p className="text-xs text-gray-500 mt-2">
-                                                Created: {new Date(decision.createdAt).toLocaleDateString()}
-                                            </p>
+                                            <p className="font-semibold">{d.action}</p>
+                                            <p className="text-sm text-gray-600 mt-1">{d.reason}</p>
                                         </div>
-                                        <button
-                                            onClick={() => onUpdateStatus(decision.id, 'completed')}
-                                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ml-4"
-                                        >
-                                            ✓ Mark Complete
+                                        <button onClick={() => onUpdateStatus(d.id, 'completed')} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                                            ✓ Done
                                         </button>
                                     </div>
                                 </div>
@@ -977,26 +1070,12 @@
                         </div>
                     )}
 
-                    {completedDecisions.length > 0 && (
+                    {completed.length > 0 && (
                         <div>
-                            <h3 className="font-bold mb-3 text-lg">Completed Actions ({completedDecisions.length})</h3>
-                            {completedDecisions.map(decision => (
-                                <div key={decision.id} className="bg-green-50 p-4 mb-2 rounded border-l-4 border-green-500">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-gray-700">{decision.action}</p>
-                                            <p className="text-sm text-gray-600 mt-1">{decision.reason}</p>
-                                            <p className="text-xs text-gray-500 mt-2">
-                                                Completed: {new Date(decision.completedAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => onUpdateStatus(decision.id, 'pending')}
-                                            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 ml-4"
-                                        >
-                                            ↺ Reopen
-                                        </button>
-                                    </div>
+                            <h3 className="font-bold mb-3">Completed ({completed.length})</h3>
+                            {completed.map(d => (
+                                <div key={d.id} className="bg-green-50 p-4 mb-2 rounded border-l-4 border-green-500">
+                                    <p className="font-semibold text-gray-700">{d.action}</p>
                                 </div>
                             ))}
                         </div>
@@ -1005,7 +1084,6 @@
             );
         }
 
-        // Render the app
         ReactDOM.render(<MarketingDashboard />, document.getElementById('root'));
     </script>
 </body>
