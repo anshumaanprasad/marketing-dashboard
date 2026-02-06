@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Marketing Analytics Dashboard</title>
+    <title>Enterprise Marketing Command Center</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -18,13 +19,12 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0a0e27;
             color: #e4e4e7;
-            overflow-x: hidden;
         }
         
         .mono { font-family: 'JetBrains Mono', monospace; }
         
         .container {
-            max-width: 1600px;
+            max-width: 1800px;
             margin: 0 auto;
             padding: 2rem;
         }
@@ -38,24 +38,11 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            background-size: 200% 200%;
-            animation: gradientShift 10s ease infinite;
-        }
-        
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
         .metric-card {
             background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%);
             border: 1px solid rgba(102,126,234,0.3);
             border-radius: 12px;
             padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
             transition: all 0.3s ease;
         }
         
@@ -64,20 +51,17 @@
             box-shadow: 0 12px 40px rgba(102,126,234,0.3);
         }
         
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: shimmer 3s infinite;
+        .comparison-card {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
         }
         
-        @keyframes shimmer {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-30%, -30%); }
+        .comparison-card.winner {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(22,163,74,0.05) 100%);
         }
         
         .tab-button {
@@ -96,10 +80,6 @@
             border-bottom-color: #667eea;
         }
         
-        .tab-button:hover {
-            color: #e4e4e7;
-        }
-        
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -109,7 +89,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
         }
         
         .btn-primary:hover {
@@ -128,34 +107,6 @@
             transition: all 0.3s;
         }
         
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .alert-card {
-            background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(220,38,38,0.2) 100%);
-            border-left: 4px solid #ef4444;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        
-        .success-card {
-            background: linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(22,163,74,0.2) 100%);
-            border-left: 4px solid #22c55e;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        
-        .warning-card {
-            background: linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(245,158,11,0.2) 100%);
-            border-left: 4px solid #fbbf24;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        
         input, select {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
@@ -163,7 +114,6 @@
             padding: 0.75rem;
             border-radius: 8px;
             font-size: 0.875rem;
-            width: 100%;
         }
         
         input:focus, select:focus {
@@ -172,20 +122,32 @@
             background: rgba(255,255,255,0.08);
         }
         
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
         .campaign-row {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 0.5rem;
-            cursor: pointer;
             transition: all 0.3s;
         }
         
         .campaign-row:hover {
             background: rgba(255,255,255,0.08);
             border-color: #667eea;
-            transform: translateX(4px);
         }
         
         .campaign-row.selected {
@@ -214,24 +176,12 @@
             border: 1px solid rgba(24,119,242,0.3);
         }
         
-        .stat-box {
-            text-align: center;
-            padding: 1rem;
-        }
-        
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .stat-label {
-            font-size: 0.875rem;
-            color: #a1a1aa;
-            margin-top: 0.5rem;
         }
         
         .chart-container {
@@ -239,58 +189,6 @@
             border-radius: 12px;
             padding: 1.5rem;
             margin-top: 1rem;
-        }
-        
-        .funnel-stage {
-            background: rgba(255,255,255,0.05);
-            border-left: 4px solid #667eea;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 4px;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 0.5rem;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-        
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 4px;
-            white-space: nowrap;
-            font-size: 0.75rem;
-            z-index: 1000;
         }
         
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
@@ -305,6 +203,36 @@
         @media (max-width: 640px) {
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
         }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .winner-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #22c55e;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }
+        
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -313,26 +241,21 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        function PremiumDashboard() {
+        function EnterpriseDashboard() {
             const [campaigns, setCampaigns] = useState([]);
+            const [selectedCampaigns, setSelectedCampaigns] = useState([]);
             const [activeTab, setActiveTab] = useState('overview');
-            const [selectedCampaign, setSelectedCampaign] = useState(null);
-            const [dateRange, setDateRange] = useState('all');
+            const [dateRange, setDateRange] = useState({ start: null, end: null });
             const [platformFilter, setPlatformFilter] = useState('all');
             const [searchTerm, setSearchTerm] = useState('');
-            const [alerts, setAlerts] = useState([]);
-            const [predictions, setPredictions] = useState(null);
+            const [comparisonMode, setComparisonMode] = useState(false);
+            const [selectedMetrics, setSelectedMetrics] = useState(['spend', 'conversions', 'cpa', 'ctr']);
+            const [benchmarkMode, setBenchmarkMode] = useState('average'); // 'average' or 'top'
+            const [cohortBy, setCohortBy] = useState('platform'); // 'platform', 'performance', 'date'
 
             useEffect(() => {
                 loadData();
             }, []);
-
-            useEffect(() => {
-                if (campaigns.length > 0) {
-                    generateAlerts();
-                    generatePredictions();
-                }
-            }, [campaigns]);
 
             const loadData = async () => {
                 try {
@@ -370,9 +293,6 @@
                         setCampaigns(updated);
                         saveData(updated);
                         alert(`Loaded ${aggregated.length} campaigns from ${platform.toUpperCase()}`);
-                    },
-                    error: (error) => {
-                        alert('Error: ' + error.message);
                     }
                 });
             };
@@ -459,77 +379,27 @@
                          camps.reduce((s, c) => s + c.spend, 0) / camps.reduce((s, c) => s + c.clicks, 0) : 0,
                     cpa: camps.reduce((s, c) => s + c.conversions, 0) > 0 ? 
                          camps.reduce((s, c) => s + c.spend, 0) / camps.reduce((s, c) => s + c.conversions, 0) : 0,
-                    monthlyData: camps
+                    dailyData: camps.sort((a, b) => new Date(a.date) - new Date(b.date))
                 }));
             };
 
-            const generateAlerts = () => {
-                const filtered = getFilteredCampaigns();
-                const avgCPA = filtered.reduce((s, c) => s + c.cpa, 0) / filtered.length;
-                const avgCTR = filtered.reduce((s, c) => s + c.ctr, 0) / filtered.length;
-                
-                const newAlerts = [];
-                
-                filtered.forEach(c => {
-                    if (c.cpa > avgCPA * 1.5 && c.conversions > 0) {
-                        newAlerts.push({
-                            type: 'danger',
-                            title: `High CPA Alert: ${c.name}`,
-                            message: `CPA of ₹${c.cpa.toFixed(0)} is ${((c.cpa/avgCPA - 1) * 100).toFixed(0)}% above average`,
-                            campaign: c.id
-                        });
-                    }
-                    
-                    if (c.ctr < avgCTR * 0.5 && c.ctr > 0) {
-                        newAlerts.push({
-                            type: 'warning',
-                            title: `Low CTR Alert: ${c.name}`,
-                            message: `CTR of ${c.ctr.toFixed(2)}% suggests creative fatigue`,
-                            campaign: c.id
-                        });
-                    }
-                    
-                    if (c.conversions === 0 && c.spend > 10000) {
-                        newAlerts.push({
-                            type: 'danger',
-                            title: `Zero Conversions: ${c.name}`,
-                            message: `Spent ₹${c.spend.toLocaleString('en-IN')} with no conversions`,
-                            campaign: c.id
-                        });
+            const toggleCampaignSelection = (campaignId) => {
+                setSelectedCampaigns(prev => {
+                    if (prev.includes(campaignId)) {
+                        return prev.filter(id => id !== campaignId);
+                    } else {
+                        return [...prev, campaignId];
                     }
                 });
-                
-                const topPerformer = [...filtered].sort((a, b) => a.cpa - b.cpa)[0];
-                if (topPerformer && topPerformer.conversions > 0) {
-                    newAlerts.push({
-                        type: 'success',
-                        title: `Top Performer: ${topPerformer.name}`,
-                        message: `Best CPA at ₹${topPerformer.cpa.toFixed(0)} - consider scaling`,
-                        campaign: topPerformer.id
-                    });
-                }
-                
-                setAlerts(newAlerts);
             };
 
-            const generatePredictions = () => {
+            const selectAllCampaigns = () => {
                 const filtered = getFilteredCampaigns();
-                const totalSpend = filtered.reduce((s, c) => s + c.spend, 0);
-                const totalConversions = filtered.reduce((s, c) => s + c.conversions, 0);
-                const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
-                
-                const daysInMonth = 30;
-                const daysElapsed = 15; // Approximate
-                const dailySpend = totalSpend / daysElapsed;
-                const projectedMonthlySpend = dailySpend * daysInMonth;
-                const projectedConversions = (projectedMonthlySpend / avgCPA) || 0;
-                
-                setPredictions({
-                    projectedSpend: projectedMonthlySpend,
-                    projectedConversions: Math.round(projectedConversions),
-                    dailyBurnRate: dailySpend,
-                    efficiency: avgCPA > 0 ? (avgCPA < 2000 ? 'Excellent' : avgCPA < 3500 ? 'Good' : 'Needs Improvement') : 'No Data'
-                });
+                setSelectedCampaigns(filtered.map(c => c.id));
+            };
+
+            const clearSelection = () => {
+                setSelectedCampaigns([]);
             };
 
             const getFilteredCampaigns = () => {
@@ -548,64 +418,78 @@
                 return filtered;
             };
 
+            const getSelectedCampaignsData = () => {
+                return campaigns.filter(c => selectedCampaigns.includes(c.id));
+            };
+
             const clearData = () => {
                 if (confirm('Clear all data?')) {
                     setCampaigns([]);
-                    setAlerts([]);
-                    setPredictions(null);
+                    setSelectedCampaigns([]);
                     saveData([]);
                 }
             };
 
-            const filteredCampaigns = getFilteredCampaigns();
-
             return (
                 <div className="container">
-                    <Header campaignCount={campaigns.length} onClear={clearData} />
+                    <Header 
+                        campaignCount={campaigns.length}
+                        selectedCount={selectedCampaigns.length}
+                        onClear={clearData}
+                    />
                     
                     {campaigns.length === 0 ? (
                         <UploadSection onUpload={handleFileUpload} />
                     ) : (
                         <>
-                            <FilterBar 
+                            <ControlPanel
                                 platformFilter={platformFilter}
                                 setPlatformFilter={setPlatformFilter}
                                 searchTerm={searchTerm}
                                 setSearchTerm={setSearchTerm}
+                                selectedCount={selectedCampaigns.length}
+                                totalCount={getFilteredCampaigns().length}
+                                onSelectAll={selectAllCampaigns}
+                                onClearSelection={clearSelection}
+                                comparisonMode={comparisonMode}
+                                setComparisonMode={setComparisonMode}
                             />
                             
                             <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
                             
                             {activeTab === 'overview' && (
-                                <OverviewTab 
-                                    campaigns={filteredCampaigns}
-                                    alerts={alerts}
-                                    predictions={predictions}
+                                <OverviewTab campaigns={getFilteredCampaigns()} />
+                            )}
+                            
+                            {activeTab === 'compare' && (
+                                <CompareTab 
+                                    campaigns={campaigns}
+                                    selectedCampaigns={getSelectedCampaignsData()}
+                                    selectedMetrics={selectedMetrics}
+                                    setSelectedMetrics={setSelectedMetrics}
                                 />
                             )}
                             
-                            {activeTab === 'funnel' && (
-                                <FunnelTab campaigns={filteredCampaigns} />
-                            )}
-                            
-                            {activeTab === 'campaigns' && (
-                                <CampaignsTab 
-                                    campaigns={filteredCampaigns}
-                                    selectedCampaign={selectedCampaign}
-                                    setSelectedCampaign={setSelectedCampaign}
+                            {activeTab === 'trends' && (
+                                <TrendsTab 
+                                    campaigns={getSelectedCampaignsData().length > 0 ? getSelectedCampaignsData() : getFilteredCampaigns()}
                                 />
                             )}
                             
-                            {activeTab === 'optimizer' && (
-                                <BudgetOptimizer campaigns={filteredCampaigns} />
+                            {activeTab === 'cohorts' && (
+                                <CohortsTab 
+                                    campaigns={getFilteredCampaigns()}
+                                    cohortBy={cohortBy}
+                                    setCohortBy={setCohortBy}
+                                />
                             )}
                             
-                            {activeTab === 'creative' && (
-                                <CreativeAnalyzer campaigns={filteredCampaigns} />
-                            )}
-                            
-                            {activeTab === 'simulator' && (
-                                <ROISimulator campaigns={filteredCampaigns} />
+                            {activeTab === 'selector' && (
+                                <CampaignSelector
+                                    campaigns={getFilteredCampaigns()}
+                                    selectedCampaigns={selectedCampaigns}
+                                    onToggle={toggleCampaignSelection}
+                                />
                             )}
                         </>
                     )}
@@ -613,27 +497,30 @@
             );
         }
 
-        function Header({ campaignCount, onClear }) {
+        function Header({ campaignCount, selectedCount, onClear }) {
             return (
                 <header className="glass-card mb-6 fade-in">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold gradient-bg" style={{
+                            <h1 className="text-3xl font-bold" style={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text'
-                            }}>Premium Marketing Analytics</h1>
-                            <p className="text-gray-400 text-sm mt-1">Enterprise-Grade Performance Intelligence</p>
+                                WebkitTextFillColor: 'transparent'
+                            }}>Enterprise Marketing Command Center</h1>
+                            <p className="text-gray-400 text-sm mt-1">CMO-Grade Analytics Platform</p>
                         </div>
-                        {campaignCount > 0 && (
-                            <div className="text-right">
-                                <div className="text-2xl font-bold mono">{campaignCount}</div>
-                                <div className="text-xs text-gray-400">Campaigns Loaded</div>
+                        <div className="text-right">
+                            <div className="text-2xl font-bold mono">{campaignCount}</div>
+                            <div className="text-xs text-gray-400">Total Campaigns</div>
+                            {selectedCount > 0 && (
+                                <div className="text-sm text-purple-400 mt-1">{selectedCount} Selected</div>
+                            )}
+                            {campaignCount > 0 && (
                                 <button onClick={onClear} className="text-xs text-red-400 hover:text-red-300 mt-2">
                                     Clear Data
                                 </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </header>
             );
@@ -646,33 +533,27 @@
                     <div className="grid-2">
                         <div>
                             <label className="block mb-2 text-sm font-semibold text-gray-300">Google Ads CSV</label>
-                            <input 
-                                type="file" 
-                                accept=".csv"
-                                onChange={(e) => onUpload(e, 'google')}
-                                className="w-full"
-                            />
+                            <input type="file" accept=".csv" onChange={(e) => onUpload(e, 'google')} />
                         </div>
                         <div>
                             <label className="block mb-2 text-sm font-semibold text-gray-300">Meta Ads CSV</label>
-                            <input 
-                                type="file" 
-                                accept=".csv"
-                                onChange={(e) => onUpload(e, 'meta')}
-                                className="w-full"
-                            />
+                            <input type="file" accept=".csv" onChange={(e) => onUpload(e, 'meta')} />
                         </div>
                     </div>
                 </div>
             );
         }
 
-        function FilterBar({ platformFilter, setPlatformFilter, searchTerm, setSearchTerm }) {
+        function ControlPanel({ 
+            platformFilter, setPlatformFilter, searchTerm, setSearchTerm,
+            selectedCount, totalCount, onSelectAll, onClearSelection,
+            comparisonMode, setComparisonMode
+        }) {
             return (
                 <div className="glass-card mb-6 fade-in">
-                    <div className="grid-3">
+                    <div className="grid-4 mb-4">
                         <div>
-                            <label className="block mb-2 text-sm font-semibold text-gray-300">Platform</label>
+                            <label className="block mb-2 text-sm font-semibold text-gray-300">Platform Filter</label>
                             <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)}>
                                 <option value="all">All Platforms</option>
                                 <option value="google">Google Ads</option>
@@ -688,6 +569,27 @@
                                 placeholder="Type to search..."
                             />
                         </div>
+                        <div className="flex items-end">
+                            <button 
+                                onClick={() => setComparisonMode(!comparisonMode)}
+                                className={comparisonMode ? 'btn-primary w-full' : 'btn-secondary w-full'}
+                            >
+                                {comparisonMode ? '✓ Comparison Mode' : 'Comparison Mode'}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-400">
+                            {selectedCount} of {totalCount} campaigns selected
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={onSelectAll} className="btn-secondary text-sm py-2 px-4">
+                                Select All ({totalCount})
+                            </button>
+                            <button onClick={onClearSelection} className="btn-secondary text-sm py-2 px-4">
+                                Clear Selection
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -695,17 +597,16 @@
 
         function TabNavigation({ activeTab, setActiveTab }) {
             const tabs = [
-                { id: 'overview', label: '📊 Overview', icon: '📊' },
-                { id: 'funnel', label: '🎯 Funnel Analysis', icon: '🎯' },
-                { id: 'campaigns', label: '📱 Campaigns', icon: '📱' },
-                { id: 'optimizer', label: '💰 Budget Optimizer', icon: '💰' },
-                { id: 'creative', label: '🎨 Creative Scoring', icon: '🎨' },
-                { id: 'simulator', label: '🔮 ROI Simulator', icon: '🔮' }
+                { id: 'overview', label: '📊 Overview' },
+                { id: 'selector', label: '✓ Select Campaigns' },
+                { id: 'compare', label: '⚖️ Compare' },
+                { id: 'trends', label: '📈 Daily Trends' },
+                { id: 'cohorts', label: '👥 Cohort Analysis' }
             ];
 
             return (
                 <div className="glass-card mb-6 fade-in">
-                    <div className="flex overflow-x-auto" style={{gap: '0.5rem'}}>
+                    <div className="flex overflow-x-auto gap-2">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
@@ -720,7 +621,7 @@
             );
         }
 
-        function OverviewTab({ campaigns, alerts, predictions }) {
+        function OverviewTab({ campaigns }) {
             const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
             const totalConversions = campaigns.reduce((s, c) => s + c.conversions, 0);
             const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
@@ -730,225 +631,117 @@
 
             return (
                 <div className="fade-in">
-                    {/* Key Metrics */}
                     <div className="grid-4 mb-6">
                         <div className="metric-card">
-                            <div className="stat-box">
+                            <div className="text-center">
                                 <div className="stat-value">₹{(totalSpend / 100000).toFixed(1)}L</div>
-                                <div className="stat-label">Total Spend</div>
+                                <div className="text-sm text-gray-400 mt-2">Total Spend</div>
                             </div>
                         </div>
                         <div className="metric-card">
-                            <div className="stat-box">
+                            <div className="text-center">
                                 <div className="stat-value">{totalConversions.toLocaleString()}</div>
-                                <div className="stat-label">Conversions</div>
+                                <div className="text-sm text-gray-400 mt-2">Conversions</div>
                             </div>
                         </div>
                         <div className="metric-card">
-                            <div className="stat-box">
+                            <div className="text-center">
                                 <div className="stat-value">₹{avgCPA.toFixed(0)}</div>
-                                <div className="stat-label">Avg CPA</div>
+                                <div className="text-sm text-gray-400 mt-2">Avg CPA</div>
                             </div>
                         </div>
                         <div className="metric-card">
-                            <div className="stat-box">
+                            <div className="text-center">
                                 <div className="stat-value">{avgCTR.toFixed(2)}%</div>
-                                <div className="stat-label">Avg CTR</div>
+                                <div className="text-sm text-gray-400 mt-2">Avg CTR</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Predictions */}
-                    {predictions && (
-                        <div className="glass-card mb-6">
-                            <h3 className="text-lg font-bold mb-4">📈 Predictive Insights</h3>
-                            <div className="grid-4">
-                                <div className="stat-box">
-                                    <div className="text-xl font-bold text-blue-400">₹{(predictions.projectedSpend / 100000).toFixed(1)}L</div>
-                                    <div className="stat-label">Projected Monthly Spend</div>
-                                </div>
-                                <div className="stat-box">
-                                    <div className="text-xl font-bold text-green-400">{predictions.projectedConversions}</div>
-                                    <div className="stat-label">Projected Conversions</div>
-                                </div>
-                                <div className="stat-box">
-                                    <div className="text-xl font-bold text-purple-400">₹{(predictions.dailyBurnRate / 1000).toFixed(1)}K</div>
-                                    <div className="stat-label">Daily Burn Rate</div>
-                                </div>
-                                <div className="stat-box">
-                                    <div className={`text-xl font-bold ${predictions.efficiency === 'Excellent' ? 'text-green-400' : predictions.efficiency === 'Good' ? 'text-blue-400' : 'text-yellow-400'}`}>
-                                        {predictions.efficiency}
+                    <div className="glass-card">
+                        <h3 className="text-lg font-bold mb-4">📱 All Campaigns</h3>
+                        <div className="grid-3 gap-4">
+                            {campaigns.slice(0, 9).map(c => (
+                                <div key={c.id} className="campaign-row">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex-1">
+                                            <div className="font-bold text-sm mb-1">{c.name.substring(0, 30)}</div>
+                                            <span className={`badge ${c.platform === 'google' ? 'badge-google' : 'badge-meta'}`}>
+                                                {c.platform}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="stat-label">Efficiency Rating</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Alerts */}
-                    {alerts.length > 0 && (
-                        <div className="glass-card">
-                            <h3 className="text-lg font-bold mb-4">🔔 Automated Alerts</h3>
-                            {alerts.map((alert, idx) => (
-                                <div key={idx} className={
-                                    alert.type === 'danger' ? 'alert-card' :
-                                    alert.type === 'success' ? 'success-card' : 'warning-card'
-                                }>
-                                    <div className="font-bold text-sm">{alert.title}</div>
-                                    <div className="text-xs mt-1 opacity-90">{alert.message}</div>
+                                    <div className="grid-2 gap-2 text-xs mt-2">
+                                        <div>
+                                            <span className="text-gray-400">Spend:</span>
+                                            <span className="ml-1 font-semibold">₹{(c.spend / 1000).toFixed(0)}K</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400">CPA:</span>
+                                            <span className="ml-1 font-semibold">₹{c.cpa.toFixed(0)}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    )}
-                </div>
-            );
-        }
-
-        function FunnelTab({ campaigns }) {
-            const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
-            const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
-            const totalConversions = campaigns.reduce((s, c) => s + c.conversions, 0);
-            
-            const stages = [
-                { label: 'Impressions', value: totalImpressions, percent: 100 },
-                { label: 'Clicks', value: totalClicks, percent: (totalClicks / totalImpressions) * 100 },
-                { label: 'Conversions', value: totalConversions, percent: (totalConversions / totalImpressions) * 100 }
-            ];
-
-            return (
-                <div className="glass-card fade-in">
-                    <h3 className="text-xl font-bold mb-6">🎯 Campaign Funnel Analysis</h3>
-                    {stages.map((stage, idx) => (
-                        <div key={idx} className="funnel-stage" style={{
-                            borderLeftColor: `hsl(${270 - idx * 30}, 70%, 60%)`
-                        }}>
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="font-bold">{stage.label}</span>
-                                <span className="mono">{stage.value.toLocaleString()}</span>
+                        {campaigns.length > 9 && (
+                            <div className="text-center mt-4 text-sm text-gray-400">
+                                +{campaigns.length - 9} more campaigns
                             </div>
-                            <div className="progress-bar">
-                                <div className="progress-fill" style={{width: `${stage.percent}%`}}></div>
-                            </div>
-                            <div className="text-xs text-gray-400 mt-1">
-                                {stage.percent.toFixed(2)}% of impressions
-                                {idx > 0 && ` • ${((stage.value / stages[idx-1].value) * 100).toFixed(2)}% conversion rate`}
-                            </div>
-                        </div>
-                    ))}
-                    
-                    <div className="mt-6 p-4 bg-blue-500 bg-opacity-10 rounded-lg border border-blue-500 border-opacity-30">
-                        <div className="font-bold text-sm mb-2">💡 Funnel Insights</div>
-                        <ul className="text-sm space-y-1 text-gray-300">
-                            <li>• Click-through rate: {((totalClicks / totalImpressions) * 100).toFixed(2)}%</li>
-                            <li>• Conversion rate: {((totalConversions / totalClicks) * 100).toFixed(2)}%</li>
-                            <li>• Drop-off at click stage: {((1 - totalClicks / totalImpressions) * 100).toFixed(1)}% of users</li>
-                            <li>• Conversion efficiency: {totalConversions > 0 ? 'Active' : 'Needs attention'}</li>
-                        </ul>
+                        )}
                     </div>
                 </div>
             );
         }
 
-        function CampaignsTab({ campaigns, selectedCampaign, setSelectedCampaign }) {
+        function CampaignSelector({ campaigns, selectedCampaigns, onToggle }) {
             return (
                 <div className="glass-card fade-in">
-                    <h3 className="text-xl font-bold mb-4">📱 Campaign Performance</h3>
-                    <div style={{maxHeight: '600px', overflowY: 'auto'}}>
+                    <h3 className="text-xl font-bold mb-4">✓ Select Campaigns for Analysis</h3>
+                    <div className="max-h-96 overflow-y-auto">
                         {campaigns.map(campaign => (
                             <div 
                                 key={campaign.id}
-                                className={`campaign-row ${selectedCampaign?.id === campaign.id ? 'selected' : ''}`}
-                                onClick={() => setSelectedCampaign(selectedCampaign?.id === campaign.id ? null : campaign)}
+                                className={`campaign-row ${selectedCampaigns.includes(campaign.id) ? 'selected' : ''}`}
                             >
-                                <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center gap-4">
+                                    <div className="checkbox-container">
+                                        <input 
+                                            type="checkbox"
+                                            checked={selectedCampaigns.includes(campaign.id)}
+                                            onChange={() => onToggle(campaign.id)}
+                                        />
+                                    </div>
                                     <div className="flex-1">
-                                        <div className="font-bold text-sm mb-1">{campaign.name}</div>
-                                        <span className={`badge ${campaign.platform === 'google' ? 'badge-google' : 'badge-meta'}`}>
-                                            {campaign.platform}
-                                        </span>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-bold mono">₹{(campaign.spend / 1000).toFixed(0)}K</div>
-                                        <div className="text-xs text-gray-400">{campaign.conversions} conv</div>
-                                    </div>
-                                </div>
-                                <div className="grid-4 gap-2 text-xs">
-                                    <div>
-                                        <span className="text-gray-400">CPA:</span>
-                                        <span className="ml-1 font-semibold">₹{campaign.cpa.toFixed(0)}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-400">CTR:</span>
-                                        <span className="ml-1 font-semibold">{campaign.ctr.toFixed(2)}%</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-400">Clicks:</span>
-                                        <span className="ml-1 font-semibold">{campaign.clicks.toLocaleString()}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-400">Impr:</span>
-                                        <span className="ml-1 font-semibold">{(campaign.impressions / 1000).toFixed(0)}K</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        function BudgetOptimizer({ campaigns }) {
-            const sorted = [...campaigns]
-                .filter(c => c.conversions > 0)
-                .sort((a, b) => a.cpa - b.cpa);
-            
-            const topPerformers = sorted.slice(0, 3);
-            const underperformers = sorted.slice(-3).reverse();
-            
-            const potentialSavings = underperformers.reduce((s, c) => s + c.spend * 0.3, 0);
-            const potentialGains = topPerformers.reduce((s, c) => {
-                const additionalBudget = potentialSavings / topPerformers.length;
-                return s + (additionalBudget / c.cpa);
-            }, 0);
-
-            return (
-                <div className="glass-card fade-in">
-                    <h3 className="text-xl font-bold mb-6">💰 Budget Optimization Recommendations</h3>
-                    
-                    <div className="mb-6">
-                        <div className="text-2xl font-bold text-green-400 mb-2">
-                            +{Math.round(potentialGains)} Conversions
-                        </div>
-                        <div className="text-sm text-gray-400">
-                            Potential gain by reallocating ₹{(potentialSavings / 1000).toFixed(0)}K from underperformers to top performers
-                        </div>
-                    </div>
-
-                    <div className="mb-6">
-                        <h4 className="font-bold text-sm mb-3 text-green-400">✅ Scale These (Best CPA)</h4>
-                        {topPerformers.map((c, idx) => (
-                            <div key={idx} className="success-card">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <div className="font-bold text-sm">{c.name}</div>
-                                        <div className="text-xs text-gray-300 mt-1">
-                                            CPA: ₹{c.cpa.toFixed(0)} • Recommend +30% budget (₹{(c.spend * 0.3 / 1000).toFixed(0)}K)
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="font-bold text-sm mb-1">{campaign.name}</div>
+                                                <span className={`badge ${campaign.platform === 'google' ? 'badge-google' : 'badge-meta'}`}>
+                                                    {campaign.platform}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold mono">₹{(campaign.spend / 1000).toFixed(0)}K</div>
+                                                <div className="text-xs text-gray-400">{campaign.conversions} conv</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div>
-                        <h4 className="font-bold text-sm mb-3 text-red-400">⚠️ Reduce or Optimize These (High CPA)</h4>
-                        {underperformers.map((c, idx) => (
-                            <div key={idx} className="alert-card">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <div className="font-bold text-sm">{c.name}</div>
-                                        <div className="text-xs text-gray-300 mt-1">
-                                            CPA: ₹{c.cpa.toFixed(0)} • Recommend -30% budget (save ₹{(c.spend * 0.3 / 1000).toFixed(0)}K)
+                                        <div className="grid-4 gap-2 text-xs mt-2">
+                                            <div>
+                                                <span className="text-gray-400">CPA:</span>
+                                                <span className="ml-1 font-semibold">₹{campaign.cpa.toFixed(0)}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400">CTR:</span>
+                                                <span className="ml-1 font-semibold">{campaign.ctr.toFixed(2)}%</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400">Clicks:</span>
+                                                <span className="ml-1 font-semibold">{campaign.clicks.toLocaleString()}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400">Impr:</span>
+                                                <span className="ml-1 font-semibold">{(campaign.impressions / 1000).toFixed(0)}K</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -959,172 +752,291 @@
             );
         }
 
-        function CreativeAnalyzer({ campaigns }) {
-            const avgCTR = campaigns.reduce((s, c) => s + c.ctr, 0) / campaigns.length;
-            
-            const creativeScores = campaigns.map(c => {
-                const ctrScore = (c.ctr / avgCTR) * 50;
-                const conversionScore = c.conversions > 0 ? 30 : 0;
-                const efficiencyScore = c.cpa > 0 && c.cpa < 3000 ? 20 : c.cpa < 5000 ? 10 : 0;
-                
-                return {
-                    campaign: c.name,
-                    platform: c.platform,
-                    score: Math.min(100, ctrScore + conversionScore + efficiencyScore),
-                    ctr: c.ctr,
-                    suggestions: []
-                };
-            }).sort((a, b) => b.score - a.score);
+        function CompareTab({ campaigns, selectedCampaigns, selectedMetrics, setSelectedMetrics }) {
+            const metrics = [
+                { id: 'spend', label: 'Spend', format: (v) => `₹${(v / 1000).toFixed(0)}K` },
+                { id: 'conversions', label: 'Conversions', format: (v) => v.toLocaleString() },
+                { id: 'cpa', label: 'CPA', format: (v) => `₹${v.toFixed(0)}` },
+                { id: 'ctr', label: 'CTR', format: (v) => `${v.toFixed(2)}%` },
+                { id: 'cpc', label: 'CPC', format: (v) => `₹${v.toFixed(2)}` },
+                { id: 'impressions', label: 'Impressions', format: (v) => (v / 1000).toFixed(0) + 'K' },
+                { id: 'clicks', label: 'Clicks', format: (v) => v.toLocaleString() }
+            ];
 
-            creativeScores.forEach(cs => {
-                if (cs.score < 40) {
-                    cs.suggestions.push('Refresh creative immediately - test new headlines and visuals');
-                    cs.suggestions.push('Consider video format if using static images');
-                }
-                if (cs.ctr < avgCTR * 0.7) {
-                    cs.suggestions.push('CTR below average - test benefit-driven headlines');
-                    cs.suggestions.push('Add social proof elements (testimonials, numbers)');
-                }
-                if (cs.score > 70) {
-                    cs.suggestions.push('Strong performer - create variations to A/B test');
-                    cs.suggestions.push('Scale this creative to other campaigns');
+            const toggleMetric = (metricId) => {
+                setSelectedMetrics(prev => {
+                    if (prev.includes(metricId)) {
+                        return prev.filter(id => id !== metricId);
+                    } else {
+                        return [...prev, metricId];
+                    }
+                });
+            };
+
+            if (selectedCampaigns.length === 0) {
+                return (
+                    <div className="glass-card fade-in text-center py-12">
+                        <div className="text-4xl mb-4">📊</div>
+                        <h3 className="text-xl font-bold mb-2">No Campaigns Selected</h3>
+                        <p className="text-gray-400 mb-4">Select 2 or more campaigns from the "Select Campaigns" tab to compare them</p>
+                    </div>
+                );
+            }
+
+            // Find winner for each metric
+            const winners = {};
+            selectedMetrics.forEach(metricId => {
+                if (metricId === 'cpa' || metricId === 'cpc') {
+                    // Lower is better
+                    winners[metricId] = selectedCampaigns.reduce((best, current) => 
+                        current[metricId] < best[metricId] ? current : best
+                    );
+                } else {
+                    // Higher is better
+                    winners[metricId] = selectedCampaigns.reduce((best, current) => 
+                        current[metricId] > best[metricId] ? current : best
+                    );
                 }
             });
 
             return (
-                <div className="glass-card fade-in">
-                    <h3 className="text-xl font-bold mb-6">🎨 Creative Performance Scoring</h3>
-                    {creativeScores.map((cs, idx) => (
-                        <div key={idx} className="mb-4 p-4" style={{
-                            background: `linear-gradient(135deg, rgba(${cs.score > 70 ? '34,197,94' : cs.score > 40 ? '251,191,36' : '239,68,68'},0.1) 0%, rgba(255,255,255,0.05) 100%)`,
-                            border: `1px solid rgba(${cs.score > 70 ? '34,197,94' : cs.score > 40 ? '251,191,36' : '239,68,68'},0.3)`,
-                            borderRadius: '8px'
-                        }}>
-                            <div className="flex justify-between items-center mb-3">
-                                <div>
-                                    <div className="font-bold text-sm">{cs.campaign}</div>
-                                    <span className={`badge ${cs.platform === 'google' ? 'badge-google' : 'badge-meta'} mt-1`}>
-                                        {cs.platform}
-                                    </span>
+                <div className="fade-in">
+                    <div className="glass-card mb-6">
+                        <h3 className="text-lg font-bold mb-4">Select Metrics to Compare</h3>
+                        <div className="grid-4">
+                            {metrics.map(metric => (
+                                <div key={metric.id} className="checkbox-container">
+                                    <input 
+                                        type="checkbox"
+                                        checked={selectedMetrics.includes(metric.id)}
+                                        onChange={() => toggleMetric(metric.id)}
+                                    />
+                                    <label>{metric.label}</label>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-3xl font-bold mono">{cs.score.toFixed(0)}</div>
-                                    <div className="text-xs text-gray-400">Creative Score</div>
-                                </div>
-                            </div>
-                            {cs.suggestions.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-700">
-                                    <div className="text-xs font-bold mb-2 text-gray-300">💡 Recommendations:</div>
-                                    <ul className="text-xs space-y-1 text-gray-400">
-                                        {cs.suggestions.map((s, sidx) => (
-                                            <li key={sidx}>• {s}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                            ))}
                         </div>
-                    ))}
+                    </div>
+
+                    <div className="glass-card">
+                        <h3 className="text-xl font-bold mb-6">⚖️ Campaign Comparison</h3>
+                        <div className="grid gap-4" style={{
+                            gridTemplateColumns: `repeat(${selectedCampaigns.length}, 1fr)`
+                        }}>
+                            {selectedCampaigns.map((campaign, idx) => {
+                                const isWinner = (metricId) => winners[metricId]?.id === campaign.id;
+                                const hasAnyWin = selectedMetrics.some(m => isWinner(m));
+                                
+                                return (
+                                    <div key={campaign.id} className={`comparison-card ${hasAnyWin ? 'winner' : ''}`}>
+                                        {hasAnyWin && <div className="winner-badge">👑</div>}
+                                        <div className="mb-4">
+                                            <h4 className="font-bold text-lg mb-2">{campaign.name}</h4>
+                                            <span className={`badge ${campaign.platform === 'google' ? 'badge-google' : 'badge-meta'}`}>
+                                                {campaign.platform}
+                                            </span>
+                                        </div>
+                                        
+                                        {selectedMetrics.map(metricId => {
+                                            const metric = metrics.find(m => m.id === metricId);
+                                            const value = campaign[metricId];
+                                            const winner = isWinner(metricId);
+                                            
+                                            return (
+                                                <div key={metricId} className="mb-3 pb-3 border-b border-gray-700 last:border-0">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm text-gray-400">{metric.label}</span>
+                                                        <span className={`text-lg font-bold mono ${winner ? 'text-green-400' : ''}`}>
+                                                            {metric.format(value)}
+                                                            {winner && ' ✓'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             );
         }
 
-        function ROISimulator({ campaigns }) {
-            const [budgetShift, setBudgetShift] = useState(50000);
-            const [fromCampaign, setFromCampaign] = useState('');
-            const [toCampaign, setToCampaign] = useState('');
-            
-            const sorted = [...campaigns].filter(c => c.conversions > 0).sort((a, b) => b.cpa - a.cpa);
-            
-            useEffect(() => {
-                if (sorted.length >= 2 && !fromCampaign && !toCampaign) {
-                    setFromCampaign(sorted[0].id);
-                    setToCampaign(sorted[sorted.length - 1].id);
-                }
-            }, [sorted]);
+        function TrendsTab({ campaigns }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
 
-            const from = campaigns.find(c => c.id === fromCampaign);
-            const to = campaigns.find(c => c.id === toCampaign);
-            
-            const lostConversions = from ? Math.round(budgetShift / from.cpa) : 0;
-            const gainedConversions = to ? Math.round(budgetShift / to.cpa) : 0;
-            const netGain = gainedConversions - lostConversions;
+            useEffect(() => {
+                if (chartRef.current && campaigns.length > 0) {
+                    renderTrendChart();
+                }
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [campaigns]);
+
+            const renderTrendChart = () => {
+                const ctx = chartRef.current.getContext('2d');
+                
+                if (chartInstance.current) {
+                    chartInstance.current.destroy();
+                }
+
+                const datasets = campaigns.map((campaign, idx) => {
+                    const colors = ['#667eea', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+                    const color = colors[idx % colors.length];
+                    
+                    return {
+                        label: campaign.name.substring(0, 30),
+                        data: campaign.dailyData ? campaign.dailyData.map(d => ({
+                            x: d.date,
+                            y: d.spend
+                        })) : [],
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        tension: 0.4
+                    };
+                });
+
+                chartInstance.current = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e4e4e7' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: { unit: 'day' },
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#a1a1aa' }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { 
+                                    color: '#a1a1aa',
+                                    callback: (value) => '₹' + (value / 1000).toFixed(0) + 'K'
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            if (campaigns.length === 0) {
+                return (
+                    <div className="glass-card fade-in text-center py-12">
+                        <div className="text-4xl mb-4">📈</div>
+                        <h3 className="text-xl font-bold mb-2">No Campaigns Selected</h3>
+                        <p className="text-gray-400">Select campaigns to see daily trends</p>
+                    </div>
+                );
+            }
 
             return (
                 <div className="glass-card fade-in">
-                    <h3 className="text-xl font-bold mb-6">🔮 ROI Simulator</h3>
-                    
-                    <div className="grid-2 mb-6">
-                        <div>
-                            <label className="block mb-2 text-sm font-semibold text-gray-300">Shift From (High CPA)</label>
-                            <select value={fromCampaign} onChange={(e) => setFromCampaign(e.target.value)}>
-                                <option value="">Select Campaign</option>
-                                {sorted.map(c => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name} (₹{c.cpa.toFixed(0)} CPA)
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block mb-2 text-sm font-semibold text-gray-300">Shift To (Low CPA)</label>
-                            <select value={toCampaign} onChange={(e) => setToCampaign(e.target.value)}>
-                                <option value="">Select Campaign</option>
-                                {sorted.reverse().map(c => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name} (₹{c.cpa.toFixed(0)} CPA)
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                    <h3 className="text-xl font-bold mb-6">📈 Daily Spend Trends</h3>
+                    <div style={{height: '500px'}}>
+                        <canvas ref={chartRef}></canvas>
                     </div>
-
-                    <div className="mb-6">
-                        <label className="block mb-2 text-sm font-semibold text-gray-300">
-                            Budget to Shift: ₹{(budgetShift / 1000).toFixed(0)}K
-                        </label>
-                        <input 
-                            type="range"
-                            min="10000"
-                            max="200000"
-                            step="10000"
-                            value={budgetShift}
-                            onChange={(e) => setBudgetShift(Number(e.target.value))}
-                            style={{width: '100%'}}
-                        />
-                    </div>
-
-                    {from && to && (
-                        <div className="p-6 bg-gradient-to-r from-purple-900 to-blue-900 bg-opacity-30 rounded-lg">
-                            <div className="grid-3 mb-4">
-                                <div className="text-center">
-                                    <div className="text-red-400 font-bold text-xl">-{lostConversions}</div>
-                                    <div className="text-xs text-gray-400 mt-1">Lost Conversions</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-green-400 font-bold text-xl">+{gainedConversions}</div>
-                                    <div className="text-xs text-gray-400 mt-1">Gained Conversions</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className={`font-bold text-2xl ${netGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                        {netGain > 0 ? '+' : ''}{netGain}
-                                    </div>
-                                    <div className="text-xs text-gray-400 mt-1">Net Change</div>
-                                </div>
-                            </div>
-                            <div className="text-center text-sm text-gray-300">
-                                {netGain > 0 ? (
-                                    <>You would gain <span className="font-bold text-green-400">{netGain} more conversions</span> by making this shift</>
-                                ) : (
-                                    <>This shift would result in <span className="font-bold text-red-400">{Math.abs(netGain)} fewer conversions</span></>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
             );
         }
 
-        ReactDOM.render(<PremiumDashboard />, document.getElementById('root'));
+        function CohortsTab({ campaigns, cohortBy, setCohortBy }) {
+            const getCohorts = () => {
+                if (cohortBy === 'platform') {
+                    return campaigns.reduce((acc, c) => {
+                        if (!acc[c.platform]) acc[c.platform] = [];
+                        acc[c.platform].push(c);
+                        return acc;
+                    }, {});
+                } else if (cohortBy === 'performance') {
+                    const avgCPA = campaigns.reduce((s, c) => s + c.cpa, 0) / campaigns.length;
+                    return {
+                        'High Performers': campaigns.filter(c => c.cpa > 0 && c.cpa < avgCPA * 0.8),
+                        'Average Performers': campaigns.filter(c => c.cpa >= avgCPA * 0.8 && c.cpa <= avgCPA * 1.2),
+                        'Low Performers': campaigns.filter(c => c.cpa > avgCPA * 1.2)
+                    };
+                }
+            };
+
+            const cohorts = getCohorts();
+
+            return (
+                <div className="glass-card fade-in">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold">👥 Cohort Analysis</h3>
+                        <select value={cohortBy} onChange={(e) => setCohortBy(e.target.value)}>
+                            <option value="platform">Group by Platform</option>
+                            <option value="performance">Group by Performance</option>
+                        </select>
+                    </div>
+
+                    {Object.entries(cohorts).map(([cohort, cohortCampaigns]) => {
+                        if (cohortCampaigns.length === 0) return null;
+                        
+                        const totalSpend = cohortCampaigns.reduce((s, c) => s + c.spend, 0);
+                        const totalConversions = cohortCampaigns.reduce((s, c) => s + c.conversions, 0);
+                        const avgCPA = totalConversions > 0 ? totalSpend / totalConversions : 0;
+
+                        return (
+                            <div key={cohort} className="mb-6 p-4 rounded-lg" style={{
+                                background: 'linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.05) 100%)',
+                                border: '1px solid rgba(102,126,234,0.2)'
+                            }}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-lg font-bold capitalize">{cohort}</h4>
+                                    <span className="text-sm text-gray-400">{cohortCampaigns.length} campaigns</span>
+                                </div>
+                                <div className="grid-4 gap-4 mb-4">
+                                    <div className="text-center">
+                                        <div className="text-xl font-bold text-purple-400">₹{(totalSpend / 100000).toFixed(1)}L</div>
+                                        <div className="text-xs text-gray-400 mt-1">Total Spend</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xl font-bold text-green-400">{totalConversions}</div>
+                                        <div className="text-xs text-gray-400 mt-1">Conversions</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xl font-bold text-blue-400">₹{avgCPA.toFixed(0)}</div>
+                                        <div className="text-xs text-gray-400 mt-1">Avg CPA</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xl font-bold text-yellow-400">
+                                            {((totalSpend / campaigns.reduce((s, c) => s + c.spend, 0)) * 100).toFixed(0)}%
+                                        </div>
+                                        <div className="text-xs text-gray-400 mt-1">% of Total Spend</div>
+                                    </div>
+                                </div>
+                                <div className="grid-3 gap-2">
+                                    {cohortCampaigns.slice(0, 6).map(c => (
+                                        <div key={c.id} className="text-xs p-2 rounded bg-black bg-opacity-20">
+                                            <div className="font-semibold mb-1">{c.name.substring(0, 25)}</div>
+                                            <div className="text-gray-400">₹{(c.spend / 1000).toFixed(0)}K • CPA: ₹{c.cpa.toFixed(0)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {cohortCampaigns.length > 6 && (
+                                    <div className="text-center mt-2 text-xs text-gray-400">
+                                        +{cohortCampaigns.length - 6} more
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<EnterpriseDashboard />, document.getElementById('root'));
     </script>
 </body>
 </html>
